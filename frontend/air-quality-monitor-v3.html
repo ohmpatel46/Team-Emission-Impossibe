@@ -83,6 +83,130 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
+        /* Popup Notifications */
+        .popup-notifications-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 500px;
+            width: calc(100% - 40px);
+            pointer-events: none;
+        }
+
+        .popup-notification {
+            background: white;
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: var(--shadow-xl);
+            border-left: 4px solid var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideInDown 0.5s ease;
+            pointer-events: auto;
+            position: relative;
+            backdrop-filter: blur(10px);
+        }
+
+        body.dark-mode .popup-notification {
+            background: var(--dark-card);
+            border-left-color: var(--primary);
+        }
+
+        .popup-notification.success {
+            border-left-color: var(--success);
+        }
+
+        .popup-notification.warning {
+            border-left-color: var(--warning);
+        }
+
+        .popup-notification.error {
+            border-left-color: var(--danger);
+        }
+
+        .popup-notification-icon {
+            font-size: 1.25rem;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .popup-notification.success .popup-notification-icon {
+            color: var(--success);
+        }
+
+        .popup-notification.warning .popup-notification-icon {
+            color: var(--warning);
+        }
+
+        .popup-notification.error .popup-notification-icon {
+            color: var(--danger);
+        }
+
+        .popup-notification-content {
+            flex: 1;
+            color: var(--text-primary);
+        }
+
+        .popup-notification-title {
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-bottom: 2px;
+        }
+
+        .popup-notification-message {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        .popup-notification-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .popup-notification-close:hover {
+            background: rgba(0, 0, 0, 0.1);
+            color: var(--text-primary);
+        }
+
+        body.dark-mode .popup-notification-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideOutUp {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+        }
+
         /* Theme Toggle - Modernized */
         .theme-toggle {
             position: fixed;
@@ -1229,6 +1353,24 @@
             .daily-grid {
                 grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
             }
+            
+            .popup-notifications-container {
+                top: 10px;
+                width: calc(100% - 20px);
+                max-width: none;
+            }
+            
+            .popup-notification {
+                padding: 12px 16px;
+            }
+            
+            .popup-notification-title {
+                font-size: 0.8rem;
+            }
+            
+            .popup-notification-message {
+                font-size: 0.8rem;
+            }
         }
 
         @media (max-width: 480px) {
@@ -1258,6 +1400,9 @@
     <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode">
         <i class="fas fa-moon"></i>
     </button>
+
+    <!-- Popup Notifications Container -->
+    <div id="popupNotifications" class="popup-notifications-container"></div>
 
     <!-- Loading Overlay (for backend data fetch) -->
     <div id="loadingOverlay" class="loading-overlay hidden">
@@ -1857,8 +2002,99 @@
             }, 10000);
         }
 
-        // Public function for backend to call
+        // ==================== POPUP NOTIFICATIONS ====================
+        function showPopupNotification(message, type = 'info', title = null) {
+            const container = document.getElementById('popupNotifications');
+            if (!container) return;
+            
+            const notification = document.createElement('div');
+            notification.className = `popup-notification ${type}`;
+            
+            // Generate unique ID for the notification
+            const notificationId = 'notification_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            notification.id = notificationId;
+            
+            // Set icon based on type
+            let icon = 'fas fa-info-circle';
+            if (type === 'success') icon = 'fas fa-check-circle';
+            if (type === 'warning') icon = 'fas fa-exclamation-triangle';
+            if (type === 'error') icon = 'fas fa-times-circle';
+            
+            // Set title based on type if not provided
+            if (!title) {
+                switch(type) {
+                    case 'success': title = 'Success'; break;
+                    case 'warning': title = 'Warning'; break;
+                    case 'error': title = 'Error'; break;
+                    default: title = 'Notification'; break;
+                }
+            }
+            
+            notification.innerHTML = `
+                <i class="popup-notification-icon ${icon}"></i>
+                <div class="popup-notification-content">
+                    <div class="popup-notification-title">${title}</div>
+                    <div class="popup-notification-message">${message}</div>
+                </div>
+                <button class="popup-notification-close" onclick="dismissPopupNotification('${notificationId}')" title="Dismiss">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            container.appendChild(notification);
+            
+            // Store notification data for potential future use
+            notification._data = {
+                id: notificationId,
+                message: message,
+                type: type,
+                title: title,
+                timestamp: new Date()
+            };
+            
+            return notificationId;
+        }
+
+        function dismissPopupNotification(notificationId) {
+            const notification = document.getElementById(notificationId);
+            if (!notification) return;
+            
+            // Add slide out animation
+            notification.style.animation = 'slideOutUp 0.3s ease forwards';
+            
+            // Remove from DOM after animation
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }
+
+        function dismissAllPopupNotifications() {
+            const container = document.getElementById('popupNotifications');
+            if (!container) return;
+            
+            const notifications = container.querySelectorAll('.popup-notification');
+            notifications.forEach(notification => {
+                dismissPopupNotification(notification.id);
+            });
+        }
+
+        // Enhanced backend notification function that also shows popup
+        function addBackendNotificationWithPopup(message, type = 'info', title = null) {
+            // Add to health recommendations container
+            addBackendNotification(message, type);
+            
+            // Also show as popup notification
+            showPopupNotification(message, type, title);
+        }
+
+        // Public functions for backend to call
         window.addBackendNotification = addBackendNotification;
+        window.addBackendNotificationWithPopup = addBackendNotificationWithPopup;
+        window.showPopupNotification = showPopupNotification;
+        window.dismissPopupNotification = dismissPopupNotification;
+        window.dismissAllPopupNotifications = dismissAllPopupNotifications;
 
         // ==================== THEME MANAGEMENT ====================
         function toggleTheme() {
@@ -2092,11 +2328,11 @@
             
             // Add demo notifications
             setTimeout(() => {
-                addBackendNotification('Welcome to Emission Impossible! Your air quality monitoring is now active.', 'success');
+                addBackendNotificationWithPopup('Welcome to Emission Impossible! Your air quality monitoring is now active.', 'success', 'System Ready');
             }, 2000);
             
             setTimeout(() => {
-                addBackendNotification('All monitoring stations are reporting good air quality levels.', 'info');
+                addBackendNotificationWithPopup('All monitoring stations are reporting good air quality levels.', 'info', 'Status Update');
             }, 5000);
         }
 
