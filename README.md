@@ -53,7 +53,7 @@ ollama serve
 
 - `GET /api/aqi/nyc/current` - Current NYC air quality
 - `GET /api/aqi/nyc/stations` - All monitoring stations  
-- `GET /api/location/{id}/current` - Current data for specific location
+- `GET /api/location/{id}/current` - Current data for specific location measured from our smart air quality sensor
 - `GET /api/location/{id}/history?hours=24` - Historical data
 - `GET /api/insights/{id}` - AI-generated health insights
 
