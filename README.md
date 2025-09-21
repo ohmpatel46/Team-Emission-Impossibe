@@ -29,7 +29,7 @@ A comprehensive air quality monitoring application that tracks air quality data 
 
 1. **Clone and setup backend:**
 ```bash
-git clone <repository-url>
+git clone https://github.com/ohmpatel46/Team-Emission-Impossible
 cd Team-Emission-Impossibe/backend
 pip install -r requirements.txt
 python -c "from database import AirQualityDatabase; db = AirQualityDatabase(); db.initialize_db()"
@@ -56,8 +56,7 @@ ollama serve
 - `GET /api/location/{id}/current` - Current data for specific location measured from our smart air quality sensor
 - `GET /api/location/{id}/history?hours=24` - Historical data
 - `GET /api/insights/{id}` - AI-generated health insights
-
-**Location IDs:** `home`, `work`, `football`, `studio`, `daycare`
+  
 
 ## 🛠️ Development Tools
 
@@ -85,12 +84,12 @@ curl http://localhost:5000/api/aqi/nyc/current
 - **Backend**: Port 5000, Database: `air_quality.db`
 - **Frontend**: Backend URL: `http://localhost:5000`
 - **AI Model**: llama2 (configurable)
-- **Update Interval**: 30 seconds
+- **Update Interval**: 10 seconds
 
 ## 📊 Data Sources
 
 - **Mock Data**: Realistic AQI values (0-300) with multiple pollutants
-- **Location Mapping**: User-friendly names (Home, Work, Football Center, Studio, Daycare)
+- **Location Mapping**: User-saved locations, AQI history tracked
 - **Historical Data**: Time-series data with proper timestamps
 - **Environmental Factors**: Temperature, humidity, and pollutant levels
 
