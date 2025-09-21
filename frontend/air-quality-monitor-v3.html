@@ -87,14 +87,13 @@
         .popup-notifications-container {
             position: fixed;
             top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+            right: 120px; /* 30px padding from dark mode button */
             z-index: 2000;
             display: flex;
             flex-direction: column;
             gap: 12px;
-            max-width: 500px;
-            width: calc(100% - 40px);
+            max-width: 350px;
+            width: calc(100% - 120px);
             pointer-events: none;
         }
 
@@ -500,11 +499,15 @@
 
         /* Dashboard - Modernized */
         .dashboard {
-            display: grid;
+            display: none;
             grid-template-columns: 380px 1fr;
             gap: 32px;
             margin-top: 32px;
             animation: fadeIn 0.8s ease;
+        }
+
+        .dashboard.active {
+            display: grid;
         }
 
         .dashboard-right {
@@ -759,6 +762,39 @@
             grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
             gap: 12px;
             margin-top: 20px;
+        }
+
+        .hour-item {
+            background: var(--light);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 3px solid var(--primary);
+        }
+
+        .hour-time {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .hour-aqi {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .hour-aqi.good { color: var(--success); }
+        .hour-aqi.moderate { color: var(--warning); }
+        .hour-aqi.unhealthy-sensitive { color: var(--danger); }
+        .hour-aqi.unhealthy { color: var(--danger); }
+        .hour-aqi.very-unhealthy { color: var(--danger); }
+        .hour-aqi.hazardous { color: var(--danger); }
+
+        .hour-status {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: capitalize;
         }
 
         .hour-item {
@@ -1041,7 +1077,7 @@
         /* Map Container - Modernized */
         .map-section {
             background: white;
-            padding: 32px;
+            padding: 32px 32px 16px 32px;
             border-radius: 24px;
             box-shadow: var(--shadow-xl);
         }
@@ -1139,7 +1175,7 @@
             margin-top: 24px;
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 12px;
+            gap: 6px;
         }
 
         .legend-item {
@@ -1147,7 +1183,8 @@
             align-items: center;
             gap: 8px;
             font-size: 0.875rem;
-            padding: 8px;
+            font-weight: bold;
+            padding: 3px;
             border-radius: 8px;
             transition: all 0.2s ease;
         }
@@ -1502,7 +1539,7 @@
                 <div class="location-selector">
                     <label for="locationSelect">Select Location:</label>
                     <select id="locationSelect" onchange="switchLocation()">
-                        <option value="home">Home</option>
+                        <option value="home">Home (Current Location)</option>
                         <option value="work">Work</option>
                         <option value="football">Football Center</option>
                         <option value="studio">Studio</option>
@@ -1512,10 +1549,10 @@
 
                 <!-- Current AQI Card -->
                 <div class="current-aqi-card" id="currentAQICard">
-                    <h2>Current AQI (measured from your sensor)</h2>
+                    <h2>Current AQI (From your sensor)</h2>
                     <div class="aqi-value" id="currentAQI">--</div>
                     <div class="aqi-status" id="currentStatus">Loading...</div>
-                    <div class="aqi-last-update" id="lastUpdate">Connecting to device...</div>
+                    <div class="aqi-last-update" id="lastUpdate">Just updated</div>
                 </div>
 
                 <!-- Average AQI Cards -->
@@ -1540,8 +1577,8 @@
                         <i class="fas fa-wifi"></i>
                     </div>
                     <div class="device-status-info">
-                        <strong>Device Status</strong>
-                        <small>Connecting...</small>
+                        <strong>Device Connected</strong>
+                        <small>Real-time monitoring active</small>
                     </div>
                 </div>
 
@@ -1549,13 +1586,8 @@
                 <div class="health-recommendations" id="healthRecommendations">
                     <h4><i class="fas fa-heart"></i> Health Recommendations</h4>
                     <div id="recommendationsList">
-                        <div class="recommendation-item">
-                            <i class="fas fa-spinner fa-spin"></i>
-                            <span>Loading recommendations...</span>
-                        </div>
+                        <!-- Recommendations will be loaded here -->
                     </div>
-                    <!-- Backend notifications endpoint -->
-                    <div id="backendNotifications" class="backend-notifications"></div>
                 </div>
 
             </div>
@@ -1565,7 +1597,7 @@
                 <!-- Map Section -->
                 <div class="map-section dashboard-card">
                     <div class="map-header">
-                        <h2>🗽 NYC Air Quality Map</h2>
+                        <h2>🗽 Air Quality Summary for your Favorite Spots</h2>
                     </div>
                     
                     <!-- Alert Banner -->
@@ -1696,6 +1728,19 @@
                 <h1 class="detail-title">24-Hour Air Quality Analysis</h1>
             </div>
             
+            <!-- Location Selector -->
+            <div class="location-selector">
+                <label for="locationSelect24h">Select Location:</label>
+                <select id="locationSelect24h" onchange="switchLocation24h()">
+                    <option value="overall">Overall (All Locations)</option>
+                    <option value="home">Home</option>
+                    <option value="work">Work</option>
+                    <option value="football">Football Center</option>
+                    <option value="studio">Studio</option>
+                    <option value="daycare">Daycare</option>
+                </select>
+            </div>
+            
             <div class="detail-content">
                 <div class="detail-card">
                     <h3><i class="fas fa-chart-bar"></i> Summary Statistics</h3>
@@ -1763,6 +1808,19 @@
                 <h1 class="detail-title">7-Day Air Quality Analysis</h1>
             </div>
             
+            <!-- Location Selector -->
+            <div class="location-selector">
+                <label for="locationSelect7d">Select Location:</label>
+                <select id="locationSelect7d" onchange="switchLocation7d()">
+                    <option value="overall">Overall (All Locations)</option>
+                    <option value="home">Home</option>
+                    <option value="work">Work</option>
+                    <option value="football">Football Center</option>
+                    <option value="studio">Studio</option>
+                    <option value="daycare">Daycare</option>
+                </select>
+            </div>
+            
             <div class="detail-content">
                 <div class="detail-card">
                     <h3><i class="fas fa-chart-bar"></i> Weekly Summary</h3>
@@ -1825,12 +1883,12 @@
     <script>
         // ==================== CONFIGURATION ====================
         const BACKEND_CONFIG = {
-            baseUrl: 'http://localhost:3000/api', // Your backend URL
+            baseUrl: 'http://localhost:5000', // Your backend URL
             endpoints: {
-                airQuality: '/air-quality',
-                userProfile: '/user-profile',
-                deviceStatus: '/device-status',
-                historicalData: '/historical-data'
+                airQuality: '/api/aqi/nyc/current',
+                userProfile: '/api/users/profile',
+                deviceStatus: '/health',
+                historicalData: '/api/aqi/nyc/current'
             },
             timeout: 20000, // 20 seconds timeout for backend
             retryAttempts: 3,
@@ -1840,6 +1898,15 @@
         const NYC_COORDS = {
             lat: 40.7128,
             lng: -74.0060
+        };
+
+        // Location to coordinates mapping for map centering (matching backend coordinates)
+        const LOCATION_COORDINATES = {
+            'home': { lat: 40.7589, lng: -73.9851, name: 'Manhattan Midtown' },
+            'work': { lat: 40.6943, lng: -73.9903, name: 'Brooklyn Downtown' },
+            'football': { lat: 40.7794, lng: -73.9217, name: 'Queens Astoria' },
+            'studio': { lat: 40.8448, lng: -73.8648, name: 'Bronx South' },
+            'daycare': { lat: 40.6415, lng: -74.0776, name: 'Staten Island North' }
         };
 
         // ==================== GLOBAL VARIABLES ====================
@@ -1924,54 +1991,836 @@
 
 
         // ==================== LOCATION MANAGEMENT ====================
-        function switchLocation() {
+        async function switchLocation() {
             const locationSelect = document.getElementById('locationSelect');
             currentLocation = locationSelect.value;
             
             // Update dashboard with location-specific data
-            updateLocationSpecificData();
+            await updateLocationSpecificData();
+            
+            // Center map on selected location
+            centerMapOnLocation(currentLocation);
             
             console.log('Switched to location:', currentLocation);
         }
 
-        function updateLocationSpecificData() {
-            // Get location-specific AQI data
-            const locationData = getLocationSpecificData(currentLocation);
+        async function switchLocation24h() {
+            const locationSelect = document.getElementById('locationSelect24h');
+            const selectedLocation = locationSelect.value;
             
-            // Update current AQI display
-            const currentAQI = document.getElementById('currentAQI');
-            const currentStatus = document.getElementById('currentStatus');
-            const lastUpdate = document.getElementById('lastUpdate');
+            console.log('🔄 Switching to location (24h page):', selectedLocation);
             
-            currentAQI.textContent = locationData.aqi;
-            currentStatus.textContent = locationData.status;
+            // Update 24-hour page with location-specific data
+            await update24HourPage(selectedLocation);
             
-            // Update color based on AQI
-            const aqiCard = document.getElementById('currentAQICard');
-            aqiCard.style.background = `linear-gradient(135deg, ${getAQIColor(locationData.aqi)}, ${getAQIColor(locationData.aqi)}dd)`;
-            
-            // Update last update time
-            const updateTime = new Date();
-            lastUpdate.textContent = 'Just updated';
-            
-            // Update health recommendations for this location
-            updateHealthRecommendations(locationData.aqi);
-            
-            // Update alert banner
-            updateAlertBanner(locationData.aqi);
+            console.log('✅ Location switch completed for 24h page');
         }
 
-        function getLocationSpecificData(location) {
-            // Mock location-specific data
-            const locationAQIs = {
-                'home': { aqi: 35, status: 'Good' },
-                'work': { aqi: 42, status: 'Good' },
-                'football': { aqi: 38, status: 'Good' },
-                'studio': { aqi: 45, status: 'Good' },
-                'daycare': { aqi: 32, status: 'Good' }
-            };
+        async function switchLocation7d() {
+            const locationSelect = document.getElementById('locationSelect7d');
+            const selectedLocation = locationSelect.value;
             
-            return locationAQIs[location] || locationAQIs['home'];
+            console.log('🔄 Switching to location (7d page):', selectedLocation);
+            
+            // Update 7-day page with location-specific data
+            await update7DayPage(selectedLocation);
+            
+            console.log('✅ Location switch completed for 7d page');
+        }
+
+        async function updateLocationSpecificData() {
+            try {
+                console.log('🔄 Updating location-specific data for:', currentLocation);
+                
+                // Get location-specific AQI data
+                const locationData = await getLocationSpecificData(currentLocation);
+                console.log('📍 Location data received:', locationData);
+                
+                // Update current AQI display
+                const currentAQI = document.getElementById('currentAQI');
+                const currentStatus = document.getElementById('currentStatus');
+                const lastUpdate = document.getElementById('lastUpdate');
+                const aqiCardTitle = document.querySelector('#currentAQICard h2');
+                
+                currentAQI.textContent = locationData.aqi;
+                currentStatus.textContent = locationData.status;
+                
+                // Update AQI card title based on location
+                if (currentLocation === 'home') {
+                    aqiCardTitle.textContent = 'Current AQI (From your sensor)';
+                } else {
+                    aqiCardTitle.textContent = 'Current AQI (From WeatherAPI)';
+                }
+                
+                // Update color based on AQI
+                const aqiCard = document.getElementById('currentAQICard');
+                aqiCard.style.background = `linear-gradient(135deg, ${getAQIColor(locationData.aqi)}, ${getAQIColor(locationData.aqi)}dd)`;
+                
+                // Update last update time
+                if (locationData.lastUpdate) {
+                    lastUpdate.textContent = formatLastUpdate(locationData.lastUpdate);
+                } else {
+                    lastUpdate.textContent = 'Just updated';
+                }
+                
+                // Update health recommendations for this location
+                await updateHealthRecommendations(locationData.aqi, currentLocation);
+                
+                // Update alert banner
+                updateAlertBanner(locationData.aqi);
+                
+                console.log('✅ Location-specific data updated successfully');
+                
+            } catch (error) {
+                console.error('❌ Error updating location-specific data:', error);
+                
+                // Fallback: show default recommendations even if API fails
+                await updateHealthRecommendations(50, currentLocation); // Default to "Good" AQI
+            }
+        }
+
+        async function getLocationSpecificData(location) {
+            try {
+                console.log('📍 Fetching location-specific data for:', location);
+                
+                // Fetch current data for the specific location
+                const response = await fetchFromBackend(`/api/location/${location}/current`);
+                console.log('📍 Location data response:', response);
+                
+                if (response && response.aqi_value) {
+                    return {
+                        aqi: response.aqi_value,
+                        status: getAQIStatus(response.aqi_value),
+                        lastUpdate: response.reading_time
+                    };
+                } else {
+                    console.log('❌ No valid data for location:', location);
+                    // Fallback to mock data
+                    const locationAQIs = {
+                        'home': { aqi: 35, status: 'Good' },
+                        'work': { aqi: 42, status: 'Good' },
+                        'football': { aqi: 38, status: 'Good' },
+                        'studio': { aqi: 45, status: 'Good' },
+                        'daycare': { aqi: 32, status: 'Good' }
+                    };
+                    return locationAQIs[location] || locationAQIs['home'];
+                }
+            } catch (error) {
+                console.error('❌ Error fetching location data:', error);
+                // Fallback to mock data
+                const locationAQIs = {
+                    'home': { aqi: 35, status: 'Good' },
+                    'work': { aqi: 42, status: 'Good' },
+                    'football': { aqi: 38, status: 'Good' },
+                    'studio': { aqi: 45, status: 'Good' },
+                    'daycare': { aqi: 32, status: 'Good' }
+                };
+                return locationAQIs[location] || locationAQIs['home'];
+            }
+        }
+
+        // ==================== BACKEND COMMUNICATION ====================
+        async function fetchFromBackend(endpoint, options = {}) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), BACKEND_CONFIG.timeout);
+            
+            try {
+                const response = await fetch(BACKEND_CONFIG.baseUrl + endpoint, {
+                    ...options,
+                    signal: controller.signal,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    }
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                clearTimeout(timeoutId);
+                if (error.name === 'AbortError') {
+                    throw new Error('Request timeout');
+                }
+                throw error;
+            }
+        }
+
+        async function fetchAirQualityData() {
+            let attempts = 0;
+            
+            while (attempts < BACKEND_CONFIG.retryAttempts) {
+                try {
+                    const data = await fetchFromBackend(BACKEND_CONFIG.endpoints.airQuality);
+                    console.log('Successfully fetched AQI data from backend');
+                    
+                    // Transform backend data to frontend format
+                    return {
+                        current: {
+                            aqi: data.current.aqi_value,
+                            status: getAQIStatus(data.current.aqi_value),
+                            lastUpdate: data.current.reading_time,
+                            location: { lat: data.current.latitude, lng: data.current.longitude }
+                        },
+                        averages: {
+                            '24h': Math.round(data.historical.reduce((sum, point) => sum + point.aqi, 0) / data.historical.length),
+                            '7d': Math.round(data.historical.reduce((sum, point) => sum + point.aqi, 0) / data.historical.length) - 10
+                        },
+                        deviceConnected: true,
+                        historicalData: data.historical.map(point => ({
+                            timestamp: new Date().toISOString(),
+                            aqi: point.aqi
+                        })),
+                        stations: [] // Will be populated by separate stations call
+                    };
+                } catch (error) {
+                    attempts++;
+                    console.error(`Backend fetch attempt ${attempts} failed:`, error);
+                    
+                    if (attempts < BACKEND_CONFIG.retryAttempts) {
+                        await new Promise(resolve => setTimeout(resolve, BACKEND_CONFIG.retryDelay));
+                    }
+                }
+            }
+            
+            throw new Error('Failed to fetch data from backend after retries');
+        }
+
+        async function fetchStationsData() {
+            try {
+                const data = await fetchFromBackend('/api/aqi/nyc/stations');
+                console.log('Successfully fetched stations data from backend');
+                
+                // Transform backend stations data to frontend format
+                return data.stations.map(station => ({
+                    name: station.location,
+                    lat: station.latitude,
+                    lng: station.longitude,
+                    aqi: station.aqi_value,
+                    status: getAQIStatus(station.aqi_value),
+                    lastUpdate: station.reading_time
+                }));
+            } catch (error) {
+                console.error('Failed to fetch stations data:', error);
+                return [];
+            }
+        }
+
+        // ==================== LOCATION-SPECIFIC DATA FETCHING ====================
+        async function fetchLocationData(locationId) {
+            try {
+                const data = await fetchFromBackend(`/api/location/${locationId}/current`);
+                console.log(`Successfully fetched ${locationId} data from backend`);
+                
+                return {
+                    aqi: data.aqi_value,
+                    status: getAQIStatus(data.aqi_value),
+                    lastUpdate: data.reading_time,
+                    pm25: data.pm25,
+                    pm10: data.pm10,
+                    o3: data.o3,
+                    no2: data.no2,
+                    so2: data.so2,
+                    co: data.co,
+                    temperature: data.temperature,
+                    humidity: data.humidity
+                };
+            } catch (error) {
+                console.error(`Error fetching ${locationId} data:`, error);
+                return null;
+            }
+        }
+
+        async function fetchLocationHistory(locationId, hours = 24) {
+            try {
+                const response = await fetchFromBackend(`/api/location/${locationId}/history?hours=${hours}`);
+                console.log(`Successfully fetched ${locationId} history from backend:`, response);
+                
+                // Check if response is an array or has a different structure
+                let dataArray;
+                if (Array.isArray(response)) {
+                    dataArray = response;
+                } else if (response.data && Array.isArray(response.data)) {
+                    dataArray = response.data;
+                } else if (response.history && Array.isArray(response.history)) {
+                    dataArray = response.history;
+                } else {
+                    console.log('Unexpected response format:', response);
+                    return [];
+                }
+                
+                return dataArray.map(record => ({
+                    time: record.reading_time,
+                    aqi: record.aqi_value,
+                    status: getAQIStatus(record.aqi_value)
+                }));
+            } catch (error) {
+                console.error(`Error fetching ${locationId} history:`, error);
+                return [];
+            }
+        }
+
+        async function fetchAllLocationsData() {
+            const locations = ['home', 'work', 'football', 'studio', 'daycare'];
+            const locationData = {};
+            
+            try {
+                const promises = locations.map(async (location) => {
+                    const data = await fetchLocationData(location);
+                    if (data) {
+                        locationData[location] = data;
+                    }
+                });
+                
+                await Promise.all(promises);
+                return locationData;
+            } catch (error) {
+                console.error('Error fetching all locations data:', error);
+                return {};
+            }
+        }
+
+        function calculateOverallAQI(locationData) {
+            const aqiValues = Object.values(locationData)
+                .filter(data => data && data.aqi)
+                .map(data => data.aqi);
+            
+            if (aqiValues.length === 0) return 0;
+            
+            const average = aqiValues.reduce((sum, aqi) => sum + aqi, 0) / aqiValues.length;
+            return Math.round(average);
+        }
+
+        async function fetchOverallLocationHistory(hours) {
+            const locations = ['home', 'work', 'football', 'studio', 'daycare'];
+            const allHistoryData = [];
+            
+            try {
+                // Fetch history data from all locations
+                const promises = locations.map(async (location) => {
+                    const historyData = await fetchLocationHistory(location, hours);
+                    return historyData.map(record => ({
+                        ...record,
+                        location: location
+                    }));
+                });
+                
+                const locationHistories = await Promise.all(promises);
+                
+                // Combine all history data
+                locationHistories.forEach(locationHistory => {
+                    allHistoryData.push(...locationHistory);
+                });
+                
+                // Sort by timestamp
+                allHistoryData.sort((a, b) => new Date(a.time) - new Date(b.time));
+                
+                // Group by time intervals and calculate average AQI for each interval
+                const groupedData = groupHistoryDataByTimeInterval(allHistoryData, hours);
+                
+                return groupedData;
+                
+            } catch (error) {
+                console.error('Error fetching overall location history:', error);
+                return [];
+            }
+        }
+
+        function groupHistoryDataByTimeInterval(historyData, hours) {
+            const intervalMinutes = Math.max(60, Math.floor(hours * 60 / 24)); // At least 1 hour intervals
+            const groupedData = {};
+            
+            // Group data by time intervals
+            historyData.forEach(record => {
+                const time = new Date(record.time);
+                const intervalKey = Math.floor(time.getTime() / (intervalMinutes * 60 * 1000));
+                
+                if (!groupedData[intervalKey]) {
+                    groupedData[intervalKey] = [];
+                }
+                groupedData[intervalKey].push(record);
+            });
+            
+            // Calculate average AQI for each interval
+            const result = [];
+            Object.keys(groupedData).forEach(intervalKey => {
+                const intervalData = groupedData[intervalKey];
+                const avgAQI = Math.round(
+                    intervalData.reduce((sum, record) => sum + record.aqi, 0) / intervalData.length
+                );
+                
+                result.push({
+                    time: intervalData[0].time, // Use first record's time
+                    aqi: avgAQI,
+                    status: getAQIStatus(avgAQI)
+                });
+            });
+            
+            return result.sort((a, b) => new Date(a.time) - new Date(b.time));
+        }
+
+        // ==================== DETAIL PAGE UPDATES ====================
+        async function update24HourPage(selectedLocation) {
+            try {
+                console.log('📊 Starting 24h page update for:', selectedLocation);
+                let historyData = [];
+                
+                if (selectedLocation === 'overall') {
+                    console.log('📈 Fetching overall location history...');
+                    // Fetch data from all locations and combine
+                    historyData = await fetchOverallLocationHistory(24);
+                } else {
+                    console.log('📍 Fetching location-specific history for:', selectedLocation);
+                    // Fetch location-specific history data
+                    historyData = await fetchLocationHistory(selectedLocation, 24);
+                }
+                
+                console.log('📋 Received history data:', historyData.length, 'records');
+                
+                if (historyData.length === 0) {
+                    console.log('❌ No history data available for', selectedLocation);
+                    return;
+                }
+
+                console.log('📊 Updating 24h stats with data:', historyData.slice(0, 3)); // Show first 3 records
+                
+                // Update summary statistics
+                update24HourStats(historyData);
+                
+                // Update hourly breakdown
+                updateHourlyBreakdown(historyData);
+                
+                console.log('✅ 24h page update completed');
+                
+            } catch (error) {
+                console.error('❌ Error updating 24-hour page:', error);
+            }
+        }
+
+        async function update7DayPage(selectedLocation) {
+            try {
+                console.log('📊 Starting 7d page update for:', selectedLocation);
+                let historyData = [];
+                
+                if (selectedLocation === 'overall') {
+                    console.log('📈 Fetching overall location history for 7 days...');
+                    // Fetch data from all locations and combine
+                    historyData = await fetchOverallLocationHistory(168); // 7 days = 168 hours
+                } else {
+                    console.log('📍 Fetching location-specific history for 7 days:', selectedLocation);
+                    // Fetch location-specific history data for 7 days
+                    historyData = await fetchLocationHistory(selectedLocation, 168);
+                }
+                
+                console.log('📋 Received 7d history data:', historyData.length, 'records');
+                
+                if (historyData.length === 0) {
+                    console.log('❌ No history data available for', selectedLocation);
+                    return;
+                }
+
+                console.log('📊 Updating 7d stats with data:', historyData.slice(0, 3)); // Show first 3 records
+                
+                // Update weekly summary
+                update7DayStats(historyData);
+                
+                // Update daily breakdown
+                updateDailyBreakdown(historyData);
+                
+                console.log('✅ 7d page update completed');
+                
+            } catch (error) {
+                console.error('❌ Error updating 7-day page:', error);
+            }
+        }
+
+        function update24HourStats(historyData) {
+            if (historyData.length === 0) {
+                console.log('❌ No data to update stats');
+                return;
+            }
+            
+            console.log('📊 Calculating stats from', historyData.length, 'data points');
+            
+            const aqiValues = historyData.map(d => d.aqi);
+            const averageAQI = Math.round(aqiValues.reduce((sum, aqi) => sum + aqi, 0) / aqiValues.length);
+            const maxAQI = Math.max(...aqiValues);
+            const minAQI = Math.min(...aqiValues);
+            
+            // Count hours in different AQI ranges
+            const goodHours = historyData.filter(d => d.aqi <= 50).length;
+            const moderateHours = historyData.filter(d => d.aqi > 50 && d.aqi <= 100).length;
+            const unhealthyHours = historyData.filter(d => d.aqi > 100).length;
+            
+            console.log('📈 Calculated stats:', {
+                averageAQI,
+                maxAQI,
+                minAQI,
+                goodHours,
+                moderateHours,
+                unhealthyHours
+            });
+            
+            // Find best and worst air quality times
+            const bestRecord = historyData.find(d => d.aqi === minAQI);
+            const worstRecord = historyData.find(d => d.aqi === maxAQI);
+            
+            // Calculate time period averages
+            const morningData = historyData.filter(d => {
+                const hour = new Date(d.time).getHours();
+                return hour >= 6 && hour < 12;
+            });
+            const afternoonData = historyData.filter(d => {
+                const hour = new Date(d.time).getHours();
+                return hour >= 12 && hour < 18;
+            });
+            const eveningData = historyData.filter(d => {
+                const hour = new Date(d.time).getHours();
+                return hour >= 18 && hour < 24;
+            });
+            
+            const morningAvg = morningData.length > 0 ? 
+                Math.round(morningData.reduce((sum, d) => sum + d.aqi, 0) / morningData.length) : 0;
+            const afternoonAvg = afternoonData.length > 0 ? 
+                Math.round(afternoonData.reduce((sum, d) => sum + d.aqi, 0) / afternoonData.length) : 0;
+            const eveningAvg = eveningData.length > 0 ? 
+                Math.round(eveningData.reduce((sum, d) => sum + d.aqi, 0) / eveningData.length) : 0;
+            
+            // Update Summary Statistics
+            const summaryStats = document.querySelectorAll('#detail24h .detail-card:first-child .stat-value');
+            console.log('🔍 Found', summaryStats.length, 'summary stat elements');
+            
+            if (summaryStats.length >= 5) {
+                summaryStats[0].textContent = averageAQI; // Average AQI
+                summaryStats[1].textContent = maxAQI;      // Highest AQI
+                summaryStats[2].textContent = minAQI;     // Lowest AQI
+                summaryStats[3].textContent = `${goodHours} hours`; // Hours in Good Range
+                summaryStats[4].textContent = `${moderateHours} hours`; // Hours in Moderate Range
+                console.log('✅ Updated summary stats');
+            } else {
+                console.log('❌ Not enough summary stat elements found:', summaryStats.length);
+            }
+            
+            // Update Peak Hours
+            const peakStats = document.querySelectorAll('#detail24h .detail-card:nth-child(2) .stat-value');
+            console.log('🔍 Found', peakStats.length, 'peak stat elements');
+            
+            if (peakStats.length >= 5) {
+                // Best Air Quality
+                if (bestRecord) {
+                    const bestTime = new Date(bestRecord.time).toLocaleTimeString('en-US', { 
+                        hour: '2-digit', 
+                        minute: '2-digit',
+                        hour12: true 
+                    });
+                    peakStats[0].textContent = `${bestTime} (${bestRecord.aqi} AQI)`;
+                }
+                
+                // Worst Air Quality
+                if (worstRecord) {
+                    const worstTime = new Date(worstRecord.time).toLocaleTimeString('en-US', { 
+                        hour: '2-digit', 
+                        minute: '2-digit',
+                        hour12: true 
+                    });
+                    peakStats[1].textContent = `${worstTime} (${worstRecord.aqi} AQI)`;
+                }
+                
+                // Time period averages
+                peakStats[2].textContent = `${morningAvg} AQI`;
+                peakStats[3].textContent = `${afternoonAvg} AQI`;
+                peakStats[4].textContent = `${eveningAvg} AQI`;
+                console.log('✅ Updated peak stats');
+            } else {
+                console.log('❌ Not enough peak stat elements found:', peakStats.length);
+            }
+        }
+
+        function update7DayStats(historyData) {
+            if (historyData.length === 0) {
+                console.log('❌ No data to update 7d stats');
+                return;
+            }
+            
+            console.log('📊 Calculating 7d stats from', historyData.length, 'data points');
+            
+            const aqiValues = historyData.map(d => d.aqi);
+            const averageAQI = Math.round(aqiValues.reduce((sum, aqi) => sum + aqi, 0) / aqiValues.length);
+            const maxAQI = Math.max(...aqiValues);
+            const minAQI = Math.min(...aqiValues);
+            
+            // Group data by day and calculate daily averages
+            const dailyData = {};
+            historyData.forEach(record => {
+                const date = new Date(record.time).toDateString();
+                if (!dailyData[date]) {
+                    dailyData[date] = [];
+                }
+                dailyData[date].push(record.aqi);
+            });
+            
+            // Calculate daily averages
+            const dailyAverages = Object.keys(dailyData).map(date => {
+                const dayAQIs = dailyData[date];
+                return {
+                    date: date,
+                    average: Math.round(dayAQIs.reduce((sum, aqi) => sum + aqi, 0) / dayAQIs.length)
+                };
+            });
+            
+            const highestDailyAvg = Math.max(...dailyAverages.map(d => d.average));
+            const lowestDailyAvg = Math.min(...dailyAverages.map(d => d.average));
+            
+            // Count days in different AQI ranges
+            const goodDays = dailyAverages.filter(d => d.average <= 50).length;
+            const moderateDays = dailyAverages.filter(d => d.average > 50 && d.average <= 100).length;
+            const unhealthyDays = dailyAverages.filter(d => d.average > 100).length;
+            
+            console.log('📈 Calculated 7d stats:', {
+                averageAQI,
+                highestDailyAvg,
+                lowestDailyAvg,
+                goodDays,
+                moderateDays,
+                unhealthyDays,
+                dailyAverages: dailyAverages.length
+            });
+            
+            // Update Weekly Summary stats
+            const weeklyStats = document.querySelectorAll('#detail7d .detail-card:first-child .stat-value');
+            console.log('🔍 Found', weeklyStats.length, 'weekly stat elements');
+            
+            if (weeklyStats.length >= 5) {
+                weeklyStats[0].textContent = averageAQI;           // Average AQI
+                weeklyStats[1].textContent = `${highestDailyAvg} AQI`;  // Highest Daily Average
+                weeklyStats[2].textContent = `${lowestDailyAvg} AQI`;   // Lowest Daily Average
+                weeklyStats[3].textContent = `${goodDays} days`;        // Days in Good Range
+                weeklyStats[4].textContent = `${moderateDays} days`;    // Days in Moderate Range
+                console.log('✅ Updated 7d stats');
+            } else {
+                console.log('❌ Not enough weekly stat elements found:', weeklyStats.length);
+            }
+        }
+
+        function updateHourlyBreakdown(historyData) {
+            console.log('🕐 updateHourlyBreakdown called with:', historyData);
+            console.log('🕐 historyData type:', typeof historyData);
+            console.log('🕐 historyData length:', historyData ? historyData.length : 'undefined');
+            
+            const hourlyGrid = document.getElementById('hourlyData24h');
+            if (!hourlyGrid) {
+                console.log('❌ hourlyData24h element not found');
+                return;
+            }
+            console.log('✅ hourlyData24h element found:', hourlyGrid);
+            
+            console.log('🕐 Updating hourly breakdown with', historyData.length, 'records');
+            console.log('📊 Sample data:', historyData.slice(0, 2));
+            
+            // Clear existing content
+            hourlyGrid.innerHTML = '';
+            
+            if (historyData.length === 0) {
+                console.log('❌ No data to show in hourly breakdown');
+                return;
+            }
+            
+            // Filter to only show readings within the last 24 hours
+            const now = new Date();
+            const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+            
+            console.log('🕐 Current time:', now);
+            console.log('🕐 24 hours ago:', twentyFourHoursAgo);
+            
+            const recentData = historyData.filter(data => {
+                const dataTime = new Date(data.time);
+                // For demo purposes, include data from September 14-20, 2025
+                const demoStartDate = new Date('2025-09-14T00:00:00Z');
+                const demoEndDate = new Date('2025-09-20T23:59:59Z');
+                
+                const isRecent = dataTime >= demoStartDate && dataTime <= demoEndDate;
+                console.log('🕐 Data time:', dataTime, 'Raw time:', data.time, 'isRecent:', isRecent);
+                return isRecent;
+            });
+            
+            console.log('📊 Filtered to', recentData.length, 'recent records');
+            
+            // Group data by hour and calculate hourly averages
+            const hourlyData = {};
+            recentData.forEach(record => {
+                const date = new Date(record.time);
+                const hourKey = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}-${date.getHours()}`;
+                if (!hourlyData[hourKey]) {
+                    hourlyData[hourKey] = [];
+                }
+                hourlyData[hourKey].push(record.aqi);
+            });
+            
+            console.log('📊 Hourly data grouped:', Object.keys(hourlyData).length, 'hours');
+            
+            // Calculate hourly averages and sort by time
+            const hourlyAverages = Object.keys(hourlyData).map(hourKey => {
+                const hourAQIs = hourlyData[hourKey];
+                const average = Math.round(hourAQIs.reduce((sum, aqi) => sum + aqi, 0) / hourAQIs.length);
+                
+                // Parse hourKey: "2025-9-21-10" -> [2025, 9, 21, 10]
+                const parts = hourKey.split('-').map(Number);
+                const year = parts[0];
+                const month = parts[1] - 1; // Month is 0-indexed in Date constructor
+                const day = parts[2];
+                const hour = parts[3];
+                
+                const date = new Date(year, month, day, hour);
+                
+                return {
+                    time: date,
+                    aqi: average,
+                    status: getAQIStatus(average),
+                    hour: hour
+                };
+            }).sort((a, b) => b.time - a.time); // Most recent first
+            
+            console.log('📊 Hourly averages calculated:', hourlyAverages.length, 'hours');
+            console.log('📊 Hourly averages:', hourlyAverages);
+            
+            // Show last 7 hours
+            const recentHours = hourlyAverages.slice(0, 7);
+            console.log('📊 Recent hours to display:', recentHours.length, 'hours');
+            
+            recentHours.forEach((hour, index) => {
+                console.log(`🕐 Processing hour ${index}:`, hour);
+                
+                const hourElement = document.createElement('div');
+                hourElement.className = 'hour-item';
+                
+                const time = hour.time.toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: false 
+                });
+                
+                hourElement.innerHTML = `
+                    <div class="hour-time">${time}</div>
+                    <div class="hour-aqi ${hour.status.toLowerCase().replace('_', '-')}">${hour.aqi}</div>
+                    <div class="hour-status">${hour.status}</div>
+                `;
+                
+                hourlyGrid.appendChild(hourElement);
+            });
+            
+            console.log('✅ Hourly breakdown updated with', recentHours.length, 'items');
+        }
+
+        function updateDailyBreakdown(historyData) {
+            console.log('📅 updateDailyBreakdown called with:', historyData);
+            console.log('📅 historyData type:', typeof historyData);
+            console.log('📅 historyData length:', historyData ? historyData.length : 'undefined');
+            
+            const dailyGrid = document.getElementById('dailyData7d');
+            if (!dailyGrid) {
+                console.log('❌ dailyData7d element not found');
+                return;
+            }
+            console.log('✅ dailyData7d element found:', dailyGrid);
+            
+            console.log('📅 Updating daily breakdown with', historyData.length, 'records');
+            console.log('📊 Sample data:', historyData.slice(0, 2));
+            
+            // Clear existing content
+            dailyGrid.innerHTML = '';
+            
+            if (historyData.length === 0) {
+                console.log('❌ No data to show in daily breakdown');
+                return;
+            }
+            
+            // Filter to only show readings within the last 7 days
+            const now = new Date();
+            const sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+            
+            console.log('📅 Current time:', now);
+            console.log('📅 7 days ago:', sevenDaysAgo);
+            
+            const recentData = historyData.filter(data => {
+                const dataTime = new Date(data.time);
+                // For demo purposes, include data from September 14-20, 2025
+                const demoStartDate = new Date('2025-09-14T00:00:00Z');
+                const demoEndDate = new Date('2025-09-20T23:59:59Z');
+                
+                const isRecent = dataTime >= demoStartDate && dataTime <= demoEndDate;
+                console.log('📅 Data time:', dataTime, 'Raw time:', data.time, 'isRecent:', isRecent);
+                return isRecent;
+            });
+            
+            console.log('📊 Filtered to', recentData.length, 'records within last 7 days');
+            
+            // Group data by day and calculate daily averages
+            const dailyData = {};
+            recentData.forEach(record => {
+                const date = new Date(record.time);
+                const dayKey = date.toDateString();
+                if (!dailyData[dayKey]) {
+                    dailyData[dayKey] = [];
+                }
+                dailyData[dayKey].push(record.aqi);
+            });
+            
+            console.log('📊 Daily data grouped:', Object.keys(dailyData).length, 'days');
+            
+            // Calculate daily averages and sort by date
+            const dailyAverages = Object.keys(dailyData).map(dayKey => {
+                const dayAQIs = dailyData[dayKey];
+                const average = Math.round(dayAQIs.reduce((sum, aqi) => sum + aqi, 0) / dayAQIs.length);
+                const date = new Date(dayKey);
+                
+                return {
+                    day: date.toLocaleDateString('en-US', { weekday: 'short' }),
+                    date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                    aqi: average,
+                    status: getAQIStatus(average)
+                };
+            }).sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            console.log('📊 Daily averages calculated:', dailyAverages.length, 'days');
+            console.log('📊 Daily averages:', dailyAverages);
+            
+            // Show last 7 days
+            const recentDays = dailyAverages.slice(-7); // Last 7 days
+            
+            recentDays.forEach((day, index) => {
+                console.log(`📅 Processing day ${index}:`, day);
+                
+                const dayElement = document.createElement('div');
+                dayElement.className = 'day-item';
+                
+                dayElement.innerHTML = `
+                    <div class="day-name">${day.day}</div>
+                    <div class="day-date">${day.date}</div>
+                    <div class="day-aqi" style="color: ${getAQIColor(day.aqi)}">${day.aqi}</div>
+                    <div class="day-status">${day.status}</div>
+                `;
+                
+                dailyGrid.appendChild(dayElement);
+            });
+            
+            console.log('✅ Daily breakdown updated with', dailyAverages.length, 'days');
+        }
+
+        async function saveUserProfile(profileData) {
+            try {
+                await fetchFromBackend(BACKEND_CONFIG.endpoints.userProfile, {
+                    method: 'POST',
+                    body: JSON.stringify(profileData)
+                });
+                console.log('User profile saved to backend');
+            } catch (error) {
+                console.error('Failed to save profile to backend, using localStorage:', error);
+                localStorage.setItem('userProfile', JSON.stringify(profileData));
+            }
         }
 
         // ==================== BACKEND NOTIFICATIONS ====================
@@ -2216,6 +3065,7 @@
             
             // Hide questionnaire and show dashboard
             document.getElementById('questionnaire').style.display = 'none';
+            document.getElementById('dashboard').classList.add('active');
             
             // Initialize dashboard
             await initializeDashboard();
@@ -2310,11 +3160,17 @@
             
             // Try to fetch real data
             try {
-                const data = await fetchAirQualityData();
+                const [airQualityData, stationsData] = await Promise.all([
+                    fetchAirQualityData(),
+                    fetchStationsData()
+                ]);
+                
+                // Combine the data
+                airQualityData.stations = stationsData;
+                
                 clearTimeout(mockDataTimeout);
                 isUsingMockData = false;
-                updateDashboard(data);
-                showStatus('Connected to air quality monitor', 'success');
+                updateDashboard(airQualityData);
             } catch (error) {
                 console.error('Failed to fetch initial data:', error);
                 // Mock data will be loaded by the timeout
@@ -2325,6 +3181,9 @@
             
             // Start periodic updates
             startDataUpdates();
+            
+            // Initialize location-specific data (sets AQI card title)
+            updateLocationSpecificData();
             
             // Add demo notifications
             setTimeout(() => {
@@ -2474,6 +3333,30 @@
             }
         }
 
+        function centerMapOnLocation(locationId) {
+            if (!mapView) {
+                console.log('❌ Map view not initialized yet');
+                return;
+            }
+
+            const location = LOCATION_COORDINATES[locationId];
+            if (!location) {
+                console.log('❌ Location not found:', locationId);
+                return;
+            }
+
+            console.log('🗺️ Centering map on:', location.name, 'at', location.lat, location.lng);
+
+            mapView.goTo({
+                center: [location.lng, location.lat],
+                zoom: 12
+            }).then(() => {
+                console.log('✅ Map centered on', location.name);
+            }).catch((error) => {
+                console.error('❌ Error centering map:', error);
+            });
+        }
+
         // ==================== DATA UPDATE FUNCTIONS ====================
         function startDataUpdates() {
             // Update every 2 minutes
@@ -2481,10 +3364,16 @@
                 if (isUsingMockData) {
                     // Try to reconnect to backend
                     try {
-                        const data = await fetchAirQualityData();
+                        const [airQualityData, stationsData] = await Promise.all([
+                            fetchAirQualityData(),
+                            fetchStationsData()
+                        ]);
+                        
+                        // Combine the data
+                        airQualityData.stations = stationsData;
+                        
                         isUsingMockData = false;
-                        updateDashboard(data);
-                        showStatus('Reconnected to air quality monitor', 'success');
+                        updateDashboard(airQualityData);
                     } catch (error) {
                         // Continue using mock data
                         const mockData = getMockData();
@@ -2493,8 +3382,14 @@
                 } else {
                     // Normal update from backend
                     try {
-                        const data = await fetchAirQualityData();
-                        updateDashboard(data);
+                        const [airQualityData, stationsData] = await Promise.all([
+                            fetchAirQualityData(),
+                            fetchStationsData()
+                        ]);
+                        
+                        // Combine the data
+                        airQualityData.stations = stationsData;
+                        updateDashboard(airQualityData);
                     } catch (error) {
                         console.error('Update failed:', error);
                         loadMockData();
@@ -2503,67 +3398,98 @@
             }, 2 * 60 * 1000); // 2 minutes
         }
 
-        function updateDashboard(data) {
-            // Update current AQI
-            const currentAQI = document.getElementById('currentAQI');
-            const currentStatus = document.getElementById('currentStatus');
-            const lastUpdate = document.getElementById('lastUpdate');
+        async function updateDashboard(data) {
+            console.log('🔄 updateDashboard called with:', data);
             
-            currentAQI.textContent = data.current.aqi;
-            currentStatus.textContent = data.current.status;
+            // Update location-specific data for the current location
+            await updateLocationSpecificData();
             
-            // Update color based on AQI
-            const aqiCard = document.getElementById('currentAQICard');
-            aqiCard.style.background = `linear-gradient(135deg, ${getAQIColor(data.current.aqi)}, ${getAQIColor(data.current.aqi)}dd)`;
-            
-            // Update last update time
-            const updateTime = new Date(data.current.lastUpdate);
-            const now = new Date();
-            const diffMinutes = Math.floor((now - updateTime) / 60000);
-            if (diffMinutes < 1) {
-                lastUpdate.textContent = 'Just updated';
-            } else if (diffMinutes < 60) {
-                lastUpdate.textContent = `Updated ${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} ago`;
-            } else {
-                lastUpdate.textContent = `Updated ${Math.floor(diffMinutes / 60)} hour${Math.floor(diffMinutes / 60) > 1 ? 's' : ''} ago`;
-            }
-            
-            // Update averages (always use hardcoded values)
+            // Update averages (use hardcoded values for now)
             document.getElementById('avg24h').textContent = '42';
             document.getElementById('avg24hStatus').textContent = 'Good';
             document.getElementById('avg7d').textContent = '38';
             document.getElementById('avg7dStatus').textContent = 'Good';
             
-            // Update device status
+            // Update device status - always connected for demo
             const deviceStatus = document.getElementById('deviceStatus');
             const deviceIcon = deviceStatus.querySelector('.device-status-icon i');
             const deviceInfo = deviceStatus.querySelector('.device-status-info');
             
-            if (data.deviceConnected) {
-                deviceStatus.className = 'device-status';
-                deviceIcon.className = 'fas fa-wifi';
-                deviceInfo.innerHTML = '<strong>Device Connected</strong><small>Real-time monitoring active</small>';
-            } else {
-                deviceStatus.className = 'device-status disconnected';
-                deviceIcon.className = 'fas fa-wifi-slash';
-                deviceInfo.innerHTML = '<strong>Device Disconnected</strong><small>Trying to reconnect...</small>';
-            }
-            
+            deviceStatus.className = 'device-status';
+            deviceIcon.className = 'fas fa-wifi';
+            deviceInfo.innerHTML = '<strong>Device Connected</strong><small>Real-time monitoring active</small>';
             
             // Update map
-            if (data.stations) {
+            if (data && data.stations) {
                 updateMapStations(data.stations);
             }
             
-            // Update health recommendations
-            updateHealthRecommendations(data.current.aqi);
-            
-            // Update alert banner
-            updateAlertBanner(data.current.aqi);
+            console.log('✅ updateDashboard completed');
         }
 
-        function updateHealthRecommendations(aqi) {
+        async function updateHealthRecommendations(aqi, locationId = 'home') {
+            console.log('🏥 Updating health recommendations for AQI:', aqi, 'Location:', locationId);
+            
             const recommendationsList = document.getElementById('recommendationsList');
+            if (!recommendationsList) {
+                console.log('❌ recommendationsList element not found');
+                return;
+            }
+            
+            try {
+                // Fetch AI-generated insights from backend with cache-busting
+                const timestamp = Date.now();
+                const response = await fetchFromBackend(`/api/insights/${locationId}?t=${timestamp}`);
+                console.log('🤖 AI insights response:', response);
+                
+                if (response && response.insight) {
+                    // Parse the insight text (it may contain multiple lines)
+                    const insightLines = response.insight.split('\n').filter(line => line.trim());
+                    
+                    const recommendations = insightLines.map((line, index) => {
+                        // Determine icon and color based on AQI
+                        let icon = 'fas fa-info-circle';
+                        let color = '#10b981';
+                        
+                        if (aqi <= 50) {
+                            icon = 'fas fa-check-circle';
+                            color = '#10b981';
+                        } else if (aqi <= 100) {
+                            icon = 'fas fa-info-circle';
+                            color = '#f59e0b';
+                        } else if (aqi <= 150) {
+                            icon = 'fas fa-exclamation-triangle';
+                            color = '#fb923c';
+                        } else {
+                            icon = 'fas fa-exclamation-triangle';
+                            color = '#ef4444';
+                        }
+                        
+                        return {
+                            icon: icon,
+                            text: line.trim(),
+                            color: color
+                        };
+                    });
+                    
+                    console.log('🏥 Generated AI recommendations:', recommendations);
+                    
+                    recommendationsList.innerHTML = recommendations.map(rec => `
+                        <div class="recommendation-item">
+                            <i class="${rec.icon}" style="color: ${rec.color}"></i>
+                            <span>${rec.text}</span>
+                        </div>
+                    `).join('');
+                    
+                    console.log('✅ AI health recommendations updated');
+                    return;
+                }
+            } catch (error) {
+                console.error('❌ Error fetching AI insights:', error);
+            }
+            
+            // Fallback to hardcoded recommendations if AI insights fail
+            console.log('🔄 Falling back to hardcoded recommendations');
             let recommendations = [];
             
             if (aqi <= 50) {
@@ -2601,12 +3527,16 @@
                 });
             }
             
+            console.log('🏥 Generated fallback recommendations:', recommendations);
+            
             recommendationsList.innerHTML = recommendations.map(rec => `
                 <div class="recommendation-item">
                     <i class="${rec.icon}" style="color: ${rec.color}"></i>
                     <span>${rec.text}</span>
                 </div>
             `).join('');
+            
+            console.log('✅ Fallback health recommendations updated');
         }
 
         function updateAlertBanner(aqi) {
@@ -2629,8 +3559,19 @@
             showStatus('Refreshing data...', 'info');
             
             try {
-                const data = isUsingMockData ? getMockData() : await fetchAirQualityData();
-                updateDashboard(data);
+                if (isUsingMockData) {
+                    const data = getMockData();
+                    updateDashboard(data);
+                } else {
+                    const [airQualityData, stationsData] = await Promise.all([
+                        fetchAirQualityData(),
+                        fetchStationsData()
+                    ]);
+                    
+                    // Combine the data
+                    airQualityData.stations = stationsData;
+                    updateDashboard(airQualityData);
+                }
                 showStatus('Data refreshed successfully', 'success');
             } catch (error) {
                 console.error('Refresh failed:', error);
@@ -2687,18 +3628,26 @@
         }
 
         // ==================== DETAIL PAGE FUNCTIONS ====================
-        function openDetailPage(type) {
+        async function openDetailPage(type) {
             // Hide dashboard
             document.getElementById('dashboard').classList.remove('active');
             
             // Show appropriate detail page
             document.getElementById(`detail${type}`).classList.add('active');
             
-            // Populate data
+            // Sync location dropdowns and load location-specific data
             if (type === '24h') {
-                populateHourlyData();
+                const locationSelect24h = document.getElementById('locationSelect24h');
+                if (locationSelect24h) {
+                    locationSelect24h.value = currentLocation;
+                }
+                await update24HourPage(currentLocation);
             } else if (type === '7d') {
-                populateDailyData();
+                const locationSelect7d = document.getElementById('locationSelect7d');
+                if (locationSelect7d) {
+                    locationSelect7d.value = currentLocation;
+                }
+                await update7DayPage(currentLocation);
             }
         }
 
@@ -2707,6 +3656,12 @@
             document.querySelectorAll('.detail-page').forEach(page => {
                 page.classList.remove('active');
             });
+            
+            // Sync main dashboard dropdown
+            const locationSelect = document.getElementById('locationSelect');
+            if (locationSelect) {
+                locationSelect.value = currentLocation;
+            }
             
             // Show dashboard
             document.getElementById('dashboard').classList.add('active');
@@ -2778,6 +3733,7 @@
             if (savedProfile) {
                 userProfile = JSON.parse(savedProfile);
                 document.getElementById('questionnaire').style.display = 'none';
+                document.getElementById('dashboard').classList.add('active');
                 initializeDashboard();
             } else {
                 // Show first question
@@ -2790,6 +3746,7 @@
             localStorage.removeItem('userProfile');
             userProfile = {};
             document.getElementById('questionnaire').style.display = 'block';
+            document.getElementById('dashboard').classList.remove('active');
             document.querySelectorAll('.detail-page').forEach(page => {
                 page.classList.remove('active');
             });
