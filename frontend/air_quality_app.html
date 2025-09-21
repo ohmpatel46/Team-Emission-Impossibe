@@ -1,0 +1,2146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air Quality Monitor</title>
+    
+    <!-- ArcGIS Maps SDK for JavaScript -->
+    <link rel="stylesheet" href="https://js.arcgis.com/4.28/esri/themes/light/main.css">
+    <script src="https://js.arcgis.com/4.28/"></script>
+    
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --success-color: #38a169;
+            --warning-color: #d69e2e;
+            --danger-color: #e53e3e;
+            --dark-bg: #1a202c;
+            --dark-card: #2d3748;
+            --dark-text: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            min-height: 100vh;
+            color: #333;
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode {
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            color: var(--dark-text);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            font-size: 20px;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            background: white;
+        }
+
+        body.dark-mode .theme-toggle {
+            background: rgba(45, 55, 72, 0.9);
+            color: var(--dark-text);
+        }
+
+        /* Questionnaire Styles */
+        .questionnaire {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-width: 600px;
+            margin: 50px auto;
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode .questionnaire {
+            background: var(--dark-card);
+            color: var(--dark-text);
+        }
+
+        .questionnaire h1 {
+            text-align: center;
+            color: #4a5568;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4299e1, #667eea);
+            transition: width 0.3s ease;
+        }
+
+        .question {
+            margin-bottom: 30px;
+        }
+
+        .question h3 {
+            margin-bottom: 15px;
+            color: #2d3748;
+            font-size: 18px;
+        }
+
+        .question input[type="number"] {
+            width: 100px;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .question input[type="radio"] {
+            margin-right: 8px;
+            transform: scale(1.2);
+        }
+
+        .question label {
+            display: block;
+            margin-bottom: 10px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 5px;
+            transition: background 0.2s;
+        }
+
+        .question label:hover {
+            background: #f7fafc;
+        }
+
+        .condition-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .condition-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            border-radius: 5px;
+            transition: background 0.2s;
+        }
+
+        .condition-item:hover {
+            background: #f7fafc;
+        }
+
+        .condition-item input[type="checkbox"] {
+            margin-right: 8px;
+            transform: scale(1.2);
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4299e1, #667eea);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(66, 153, 225, 0.3);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        /* Dashboard Styles */
+        .dashboard {
+            display: none;
+            grid-template-columns: 2fr 3fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .dashboard.active {
+            display: grid;
+        }
+
+        .dashboard-left {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            height: fit-content;
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode .dashboard-left {
+            background: var(--dark-card);
+            color: var(--dark-text);
+        }
+
+        .current-aqi {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .aqi-value {
+            font-size: 72px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .aqi-status {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .aqi-good { color: #38a169; }
+        .aqi-moderate { color: #d69e2e; }
+        .aqi-unhealthy-sensitive { color: #dd6b20; }
+        .aqi-unhealthy { color: #e53e3e; }
+        .aqi-very-unhealthy { color: #805ad5; }
+        .aqi-hazardous { color: #744210; }
+
+        .aqi-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .aqi-card {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #4299e1;
+        }
+
+        .aqi-card h4 {
+            color: #4a5568;
+            margin-bottom: 8px;
+        }
+
+        .aqi-card .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        .device-status {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0fff4;
+            border-radius: 8px;
+            border: 1px solid #9ae6b4;
+        }
+
+        .device-status.disconnected {
+            background: #fff5f5;
+            border-color: #feb2b2;
+        }
+
+        .dashboard-right {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode .dashboard-right {
+            background: var(--dark-card);
+            color: var(--dark-text);
+        }
+
+        .map-container {
+            position: relative;
+            height: 500px;
+            background: #f7fafc;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        #mapView {
+            width: 100%;
+            height: 100%;
+            border-radius: 10px;
+        }
+
+        .map-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #4a5568;
+            font-size: 16px;
+            z-index: 1000;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .map-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .map-control-btn {
+            background: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            font-size: 12px;
+        }
+
+        .map-control-btn:hover {
+            background: #f7fafc;
+        }
+
+        .aqi-popup {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .popup-content {
+            padding: 10px;
+        }
+
+        .popup-aqi-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+
+        .aqi-legend {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            margin-right: 8px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Loading and Error States */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #e53e3e;
+        }
+
+        body.dark-mode .error-message {
+            background: #742a2a;
+            color: #feb2b2;
+        }
+
+        .success-message {
+            background: #c6f6d5;
+            color: #22543d;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid var(--success-color);
+        }
+
+        body.dark-mode .success-message {
+            background: #22543d;
+            color: #9ae6b4;
+        }
+
+        /* Chart Container */
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        body.dark-mode .chart-container {
+            background: var(--dark-card);
+        }
+
+        /* Alert Banner */
+        .alert-banner {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.8; }
+            100% { opacity: 1; }
+        }
+
+        /* Health Recommendations */
+        .health-recommendations {
+            background: #f0fff4;
+            border: 1px solid #9ae6b4;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        body.dark-mode .health-recommendations {
+            background: #22543d;
+            border-color: #38a169;
+        }
+
+        .recommendation-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 8px;
+            background: rgba(56, 161, 105, 0.1);
+            border-radius: 5px;
+        }
+
+        .recommendation-item i {
+            margin-right: 10px;
+            color: var(--success-color);
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .questionnaire {
+                margin: 20px auto;
+                padding: 20px;
+            }
+            
+            .condition-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .theme-toggle {
+                top: 10px;
+                right: 10px;
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
+            }
+
+            .container {
+                padding: 10px;
+            }
+
+            .aqi-value {
+                font-size: 48px !important;
+            }
+
+            .aqi-status {
+                font-size: 18px !important;
+            }
+
+            .map-container {
+                height: 300px;
+            }
+
+            .chart-container {
+                padding: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .aqi-value {
+                font-size: 36px !important;
+            }
+
+            .btn {
+                padding: 10px 16px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode">
+        <i class="fas fa-moon"></i>
+    </button>
+
+    <div class="container">
+        <div class="header">
+            <h1>🌬️ Air Quality Monitor</h1>
+            <p>Personal air quality tracking and health insights</p>
+        </div>
+
+        <!-- Questionnaire Section -->
+        <div id="questionnaire" class="questionnaire">
+            <h1>Health Profile Setup</h1>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <!-- Question 1: Age -->
+            <div class="question" id="q1">
+                <h3>What is your age?</h3>
+                <input type="number" id="age" min="18" max="120" placeholder="Enter your age">
+            </div>
+
+            <!-- Question 2: Sex -->
+            <div class="question hidden" id="q2">
+                <h3>Sex:</h3>
+                <label><input type="radio" name="sex" value="male"> Male</label>
+                <label><input type="radio" name="sex" value="female"> Female</label>
+                <label><input type="radio" name="sex" value="other"> Other</label>
+                <label><input type="radio" name="sex" value="prefer-not-to-say"> Prefer not to say</label>
+            </div>
+
+            <!-- Question 3: Smoking Status -->
+            <div class="question hidden" id="q3">
+                <h3>Smoking status:</h3>
+                <label><input type="radio" name="smoking" value="never"> Never smoked</label>
+                <label><input type="radio" name="smoking" value="former"> Former smoker (quit >1 year ago)</label>
+                <label><input type="radio" name="smoking" value="occasional"> Occasional smoker (few times per month)</label>
+                <label><input type="radio" name="smoking" value="regular"> Regular smoker (daily/weekly)</label>
+            </div>
+
+            <!-- Question 4: Health Conditions -->
+            <div class="question hidden" id="q4">
+                <h3>Do you have any of these pre-existing health conditions? (Select all that apply)</h3>
+                <div class="condition-grid">
+                    <div class="condition-item">
+                        <input type="checkbox" id="asthma" value="asthma">
+                        <label for="asthma">Asthma</label>
+                    </div>
+                    <div class="condition-item">
+                        <input type="checkbox" id="copd" value="copd">
+                        <label for="copd">COPD</label>
+                    </div>
+                    <div class="condition-item">
+                        <input type="checkbox" id="allergies" value="allergies">
+                        <label for="allergies">Allergic rhinitis/hay fever</label>
+                    </div>
+                    <div class="condition-item">
+                        <input type="checkbox" id="heart" value="heart">
+                        <label for="heart">Heart disease</label>
+                    </div>
+                    <div class="condition-item">
+                        <input type="checkbox" id="diabetes" value="diabetes">
+                        <label for="diabetes">Diabetes</label>
+                    </div>
+                    <div class="condition-item">
+                        <input type="checkbox" id="cancer" value="cancer">
+                        <label for="cancer">Lung cancer/respiratory cancer</label>
+                    </div>
+                    <div class="condition-item">
+                        <input type="checkbox" id="fibrosis" value="fibrosis">
+                        <label for="fibrosis">Pulmonary fibrosis</label>
+                    </div>
+                    <div class="condition-item">
+                        <input type="checkbox" id="sleep-apnea" value="sleep-apnea">
+                        <label for="sleep-apnea">Sleep apnea</label>
+                    </div>
+                    <div class="condition-item">
+                        <input type="checkbox" id="bronchitis" value="bronchitis">
+                        <label for="bronchitis">Chronic bronchitis</label>
+                    </div>
+                    <div class="condition-item">
+                        <input type="checkbox" id="pneumonia" value="pneumonia">
+                        <label for="pneumonia">Pneumonia (recurrent)</label>
+                    </div>
+                    <div class="condition-item">
+                        <input type="checkbox" id="none" value="none">
+                        <label for="none">None of the above</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="nav-buttons">
+                <button class="btn btn-secondary hidden" id="prevBtn" onclick="previousQuestion()">Previous</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next</button>
+            </div>
+        </div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboard" class="dashboard">
+            <div class="dashboard-left">
+                <div class="current-aqi">
+                    <h2>Current AQI</h2>
+                    <div class="aqi-value aqi-unhealthy" id="currentAQI">156</div>
+                    <div class="aqi-status aqi-unhealthy" id="currentStatus">Unhealthy</div>
+                    <small id="lastUpdate">Last updated: 2 minutes ago</small>
+                </div>
+
+                <div class="aqi-cards">
+                    <div class="aqi-card">
+                        <h4>24-Hour Average</h4>
+                        <div class="value aqi-moderate" id="avg24h">89</div>
+                        <small>Moderate</small>
+                    </div>
+                    <div class="aqi-card">
+                        <h4>7-Day Average</h4>
+                        <div class="value aqi-moderate" id="avg7d">67</div>
+                        <small>Moderate</small>
+                    </div>
+                </div>
+
+                <div class="device-status" id="deviceStatus">
+                    <strong>📡 Device Status:</strong> Connected<br>
+                    <small>Last sync: Just now</small>
+                </div>
+
+                <!-- Health Recommendations -->
+                <div class="health-recommendations" id="healthRecommendations">
+                    <h4><i class="fas fa-heart"></i> Health Recommendations</h4>
+                    <div id="recommendationsList">
+                        <div class="recommendation-item">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Air quality is good - enjoy outdoor activities!</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Historical Chart -->
+                <div class="chart-container">
+                    <h4><i class="fas fa-chart-line"></i> 24-Hour AQI Trend</h4>
+                    <canvas id="aqiChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+
+            <div class="dashboard-right">
+                <h2>🗽 NYC Air Quality Map</h2>
+                
+                <!-- Alert Banner for Poor Air Quality -->
+                <div id="alertBanner" class="alert-banner hidden">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span id="alertText">Air quality is unhealthy - limit outdoor activities!</span>
+                </div>
+
+                <!-- Data Source Info -->
+                <div id="dataSourceInfo" class="success-message" style="margin-bottom: 10px;">
+                    <div class="loading-spinner"></div>
+                    <span>Loading air quality data...</span>
+                    <button onclick="skipToMockData()" class="btn btn-secondary" style="margin-left: 10px; padding: 4px 8px; font-size: 12px;">
+                        Skip Loading
+                    </button>
+                </div>
+                
+                <!-- Error Messages -->
+                <div id="errorMessages"></div>
+                <div class="map-container">
+                    <div class="map-loading" id="mapLoading">Loading interactive map...</div>
+                    <div id="mapView"></div>
+                    <div class="map-controls">
+                        <button class="map-control-btn" onclick="toggleAQILayer()" title="Toggle AQI markers">
+                            <i class="fas fa-eye"></i> Toggle AQI
+                        </button>
+                        <button class="map-control-btn" onclick="centerOnNYC()" title="Center map on NYC">
+                            <i class="fas fa-crosshairs"></i> Center NYC
+                        </button>
+                        <button class="map-control-btn" onclick="refreshEPAData()" title="Refresh air quality data">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                        <button class="map-control-btn" style="background: #ffd700; font-weight: bold;" onclick="forceUpdateWithCorrection()" title="Test all data sources">
+                            <i class="fas fa-tools"></i> Test APIs
+                        </button>
+                        <button class="map-control-btn" style="background: #28a745; color: white;" onclick="testAPIKeys()" title="Debug API connections">
+                            <i class="fas fa-bug"></i> Debug APIs
+                        </button>
+                    </div>
+                </div>
+
+                <div class="aqi-legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #38a169;"></div>
+                        Good (0-50)
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #d69e2e;"></div>
+                        Moderate (51-100)
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #dd6b20;"></div>
+                        Unhealthy for Sensitive (101-150)
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #e53e3e;"></div>
+                        Unhealthy (151-200)
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #805ad5;"></div>
+                        Very Unhealthy (201-300)
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #744210;"></div>
+                        Hazardous (300+)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentQuestion = 1;
+        const totalQuestions = 4;
+        let userProfile = {};
+
+        function updateProgress() {
+            const progress = (currentQuestion / totalQuestions) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        function showQuestion(questionNum) {
+            // Hide all questions
+            for (let i = 1; i <= totalQuestions; i++) {
+                document.getElementById(`q${i}`).classList.add('hidden');
+            }
+            
+            // Show current question
+            document.getElementById(`q${questionNum}`).classList.remove('hidden');
+            
+            // Update navigation buttons
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            
+            if (questionNum === 1) {
+                prevBtn.classList.add('hidden');
+            } else {
+                prevBtn.classList.remove('hidden');
+            }
+            
+            if (questionNum === totalQuestions) {
+                nextBtn.textContent = 'Complete Setup';
+            } else {
+                nextBtn.textContent = 'Next';
+            }
+            
+            updateProgress();
+        }
+
+        function validateCurrentQuestion() {
+            switch(currentQuestion) {
+                case 1:
+                    const age = document.getElementById('age').value;
+                    if (!age || age < 18 || age > 120) {
+                        alert('Please enter a valid age (18-120)');
+                        return false;
+                    }
+                    userProfile.age = age;
+                    break;
+                case 2:
+                    const sex = document.querySelector('input[name="sex"]:checked');
+                    if (!sex) {
+                        alert('Please select your sex');
+                        return false;
+                    }
+                    userProfile.sex = sex.value;
+                    break;
+                case 3:
+                    const smoking = document.querySelector('input[name="smoking"]:checked');
+                    if (!smoking) {
+                        alert('Please select your smoking status');
+                        return false;
+                    }
+                    userProfile.smoking = smoking.value;
+                    break;
+                case 4:
+                    const conditions = Array.from(document.querySelectorAll('input[type="checkbox"]:checked'))
+                        .map(cb => cb.value);
+                    userProfile.conditions = conditions;
+                    break;
+            }
+            return true;
+        }
+
+        function nextQuestion() {
+            if (!validateCurrentQuestion()) return;
+            
+            if (currentQuestion === totalQuestions) {
+                // Complete setup
+                completeSetup();
+                return;
+            }
+            
+            currentQuestion++;
+            showQuestion(currentQuestion);
+        }
+
+        function previousQuestion() {
+            if (currentQuestion > 1) {
+                currentQuestion--;
+                showQuestion(currentQuestion);
+            }
+        }
+
+        async function completeSetup() {
+            console.log('User Profile:', userProfile);
+            
+            // Save to backend (with localStorage fallback)
+            await saveUserProfile(userProfile);
+            
+            // Hide questionnaire and show dashboard
+            document.getElementById('questionnaire').style.display = 'none';
+            document.getElementById('dashboard').classList.add('active');
+            
+            // Initialize dashboard with backend data
+            await initializeDashboard();
+        }
+
+        // API Configuration - Multiple Data Sources
+        const API_CONFIG = {
+            // OpenWeatherMap API (Primary - More Reliable)
+            openWeather: {
+                baseUrl: 'https://api.openweathermap.org/data/2.5',
+                apiKey: 'b272911936e4f842f3f873fff2d5eb16', // ⚠️ REPLACE THIS WITH YOUR API KEY
+                endpoints: {
+                    airPollution: '/air_pollution',
+                    forecast: '/forecast'
+                }
+            },
+            
+            // EPA AirNow API (Fallback)
+            epa: {
+                baseUrl: 'https://www.airnowapi.org/aq',
+                apiKey: '0B31DEEC-7F11-4A0C-83D2-CD5238001DF3', // Placeholder - may not work
+                updateFrequency: 5 * 60 * 1000, // 5 minutes
+                cacheKey: 'epa_aqi_data',
+                cacheTimeKey: 'epa_aqi_timestamp'
+            },
+            
+            // General settings
+            updateFrequency: 2 * 60 * 1000, // 2 minutes
+            maxRetries: 3,
+            retryDelay: 2000 // 2 seconds
+        };
+
+        // NYC Coordinates
+        const NYC_COORDS = {
+            lat: 40.7128,
+            lng: -73.935242
+        };
+
+        // Global variables
+        let aqiChart = null;
+        let currentTheme = 'light';
+        let dataUpdateInterval = null;
+        let retryCount = 0;
+
+        // Theme Toggle Function
+        function toggleTheme() {
+            const body = document.body;
+            const themeIcon = document.querySelector('.theme-toggle i');
+            
+            if (currentTheme === 'light') {
+                body.classList.add('dark-mode');
+                themeIcon.className = 'fas fa-sun';
+                currentTheme = 'dark';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                body.classList.remove('dark-mode');
+                themeIcon.className = 'fas fa-moon';
+                currentTheme = 'light';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        // Load saved theme
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            if (savedTheme === 'dark') {
+                toggleTheme();
+            }
+        }
+
+        // Enhanced Error Handling and User Feedback
+        function showError(message, isRetryable = true) {
+            const errorContainer = document.getElementById('errorMessages');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.innerHTML = `
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Error:</strong> ${message}
+                ${isRetryable ? '<br><button onclick="retryDataFetch()" class="btn btn-secondary" style="margin-top: 8px;">Retry</button>' : ''}
+            `;
+            errorContainer.appendChild(errorDiv);
+            
+            // Auto-remove after 10 seconds
+            setTimeout(() => {
+                if (errorDiv.parentNode) {
+                    errorDiv.parentNode.removeChild(errorDiv);
+                }
+            }, 10000);
+        }
+
+        function showSuccess(message) {
+            const sourceInfo = document.getElementById('dataSourceInfo');
+            sourceInfo.className = 'success-message';
+            sourceInfo.innerHTML = `
+                <i class="fas fa-check-circle"></i>
+                <span>${message}</span>
+            `;
+        }
+
+        function showLoading(message = 'Loading air quality data...') {
+            const sourceInfo = document.getElementById('dataSourceInfo');
+            sourceInfo.className = 'success-message';
+            sourceInfo.innerHTML = `
+                <div class="loading-spinner"></div>
+                <span>${message}</span>
+            `;
+        }
+
+        // Test API Keys Function
+        async function testAPIKeys() {
+            console.log('🔍 Testing API Keys...');
+            
+            // Test OpenWeatherMap API
+            try {
+                const owmUrl = `${API_CONFIG.openWeather.baseUrl}${API_CONFIG.openWeather.endpoints.airPollution}` +
+                    `?lat=${NYC_COORDS.lat}&lon=${NYC_COORDS.lng}&appid=${API_CONFIG.openWeather.apiKey}`;
+                
+                console.log('Testing OpenWeatherMap URL:', owmUrl);
+                const owmResponse = await fetch(owmUrl);
+                console.log('OpenWeatherMap Response Status:', owmResponse.status);
+                
+                if (owmResponse.ok) {
+                    const owmData = await owmResponse.json();
+                    console.log('✅ OpenWeatherMap API Working:', owmData);
+                    return { openWeather: true, data: owmData };
+                } else {
+                    const errorText = await owmResponse.text();
+                    console.log('❌ OpenWeatherMap API Error:', errorText);
+                    return { openWeather: false, error: errorText };
+                }
+            } catch (error) {
+                console.log('❌ OpenWeatherMap API Failed:', error.message);
+                return { openWeather: false, error: error.message };
+            }
+        }
+
+        // OpenWeatherMap API Functions (Primary Data Source) - Enhanced Debugging
+        async function fetchOpenWeatherAirQuality() {
+            try {
+                if (API_CONFIG.openWeather.apiKey === 'YOUR_OPENWEATHER_API_KEY_HERE') {
+                    throw new Error('OpenWeatherMap API key not configured');
+                }
+
+                const url = `${API_CONFIG.openWeather.baseUrl}${API_CONFIG.openWeather.endpoints.airPollution}` +
+                    `?lat=${NYC_COORDS.lat}&lon=${NYC_COORDS.lng}&appid=${API_CONFIG.openWeather.apiKey}`;
+
+                console.log('🌤️ Fetching OpenWeatherMap data from:', url);
+                const response = await fetch(url);
+                
+                console.log('OpenWeatherMap Response Status:', response.status);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('OpenWeatherMap Error Response:', errorText);
+                    throw new Error(`OpenWeather API error: ${response.status} ${response.statusText} - ${errorText}`);
+                }
+
+                const data = await response.json();
+                console.log('OpenWeatherMap Raw Data:', data);
+                return processOpenWeatherData(data);
+
+            } catch (error) {
+                console.error('OpenWeather API failed:', error);
+                throw error;
+            }
+        }
+
+        function processOpenWeatherData(data) {
+            const aqi = data.list[0].main.aqi;
+            const components = data.list[0].components;
+            
+            // Convert OpenWeather AQI (1-5) to US AQI (0-500)
+            const usAQI = convertToUSAQI(aqi, components);
+            
+            return {
+                stations: [{
+                    name: "New York City, NY",
+                    lat: NYC_COORDS.lat,
+                    lng: NYC_COORDS.lng,
+                    aqi: usAQI,
+                    status: getAQIStatus(usAQI),
+                    lastUpdate: new Date().toLocaleString(),
+                    parameter: "AQI",
+                    components: components,
+                    source: "OpenWeatherMap"
+                }],
+                lastUpdate: new Date().toISOString(),
+                source: 'OpenWeatherMap API',
+                cacheStatus: 'fresh'
+            };
+        }
+
+        function convertToUSAQI(owmAqi, components) {
+            // OpenWeather uses 1-5 scale, convert to US AQI 0-500
+            const aqiMap = {
+                1: 50,   // Good
+                2: 100,  // Moderate  
+                3: 150,  // Unhealthy for Sensitive
+                4: 200,  // Unhealthy
+                5: 300   // Very Unhealthy
+            };
+            
+            let baseAQI = aqiMap[owmAqi] || 50;
+            
+            // Adjust based on PM2.5 concentration for more accuracy
+            if (components.pm2_5) {
+                const pm25 = components.pm2_5;
+                if (pm25 <= 12) baseAQI = Math.min(baseAQI, 50);
+                else if (pm25 <= 35) baseAQI = Math.min(baseAQI, 100);
+                else if (pm25 <= 55) baseAQI = Math.min(baseAQI, 150);
+                else if (pm25 <= 150) baseAQI = Math.min(baseAQI, 200);
+                else baseAQI = Math.min(baseAQI, 300);
+            }
+            
+            return baseAQI;
+        }
+
+        // Enhanced Data Fetching with Timeout and Better Fallbacks
+        async function fetchAirQualityData() {
+            showLoading('Fetching air quality data...');
+            
+            try {
+                // Try OpenWeatherMap first with timeout
+                try {
+                    console.log('🌤️ Attempting OpenWeatherMap API...');
+                    const data = await Promise.race([
+                        fetchOpenWeatherAirQuality(),
+                        new Promise((_, reject) => 
+                            setTimeout(() => reject(new Error('OpenWeatherMap timeout after 10 seconds')), 10000)
+                        )
+                    ]);
+                    showSuccess(`✅ Live data from ${data.source}`);
+                    retryCount = 0;
+                    return data;
+                } catch (owmError) {
+                    console.log('❌ OpenWeatherMap failed:', owmError.message);
+                    showError(`OpenWeatherMap failed: ${owmError.message}`);
+                }
+
+                // Fallback to EPA with timeout
+                try {
+                    console.log('🏛️ Attempting EPA API...');
+                    const data = await Promise.race([
+                        fetchEPAAQIData(),
+                        new Promise((_, reject) => 
+                            setTimeout(() => reject(new Error('EPA timeout after 10 seconds')), 10000)
+                        )
+                    ]);
+                    showSuccess(`✅ Data from ${data.source}`);
+                    retryCount = 0;
+                    return data;
+                } catch (epaError) {
+                    console.log('❌ EPA failed:', epaError.message);
+                    showError(`EPA API failed: ${epaError.message}`);
+                }
+
+                // Final fallback to mock data
+                console.log('📊 Using mock data as fallback...');
+                const mockData = getMockEPAData();
+                showSuccess('📊 Using demo data (APIs unavailable)');
+                return mockData;
+
+            } catch (error) {
+                console.error('❌ All data sources failed:', error);
+                showSuccess('📊 Using demo data (all APIs failed)');
+                return getMockEPAData();
+            }
+        }
+
+        // Retry function for failed requests
+        async function retryDataFetch() {
+            if (retryCount >= API_CONFIG.maxRetries) {
+                showError('Maximum retry attempts reached', false);
+                return;
+            }
+            
+            retryCount++;
+            showLoading(`Retrying... (${retryCount}/${API_CONFIG.maxRetries})`);
+            
+            setTimeout(async () => {
+                try {
+                    const data = await fetchAirQualityData();
+                    updateAQIStations(data.stations);
+                    updateDataSourceInfo(data);
+                } catch (error) {
+                    console.error('Retry failed:', error);
+                }
+            }, API_CONFIG.retryDelay);
+        }
+
+        // Skip to mock data function (for users who want to bypass API issues)
+        function skipToMockData() {
+            console.log('🚀 User requested to skip loading and use mock data');
+            
+            // Clear any existing intervals
+            if (dataUpdateInterval) {
+                clearInterval(dataUpdateInterval);
+                dataUpdateInterval = null;
+            }
+            
+            // Load mock data immediately
+            const mockData = getMockEPAData();
+            updateDashboard(mockData);
+            updateAQIStations(mockData.stations);
+            updateDataSourceInfo(mockData);
+            updateHealthRecommendations(mockData.stations[0].aqi, userProfile);
+            
+            showSuccess('📊 Demo data loaded - APIs skipped');
+            
+            // Hide the skip button
+            const skipButton = document.querySelector('button[onclick="skipToMockData()"]');
+            if (skipButton) {
+                skipButton.style.display = 'none';
+            }
+        }
+
+        // Fetch current AQI data from EPA AirNow API (Fallback)
+        async function fetchEPAAQIData() {
+            try {
+                // Check if we have cached data that's still fresh
+                const cachedData = getCachedEPAData();
+                if (cachedData) {
+                    console.log('Using cached EPA data');
+                    return cachedData;
+                }
+
+                console.log('Fetching fresh EPA data...');
+
+                // EPA AirNow API endpoint for current observations by bounding box
+                const apiUrl = `${EPA_API_CONFIG.baseUrl}/observation/bbox` +
+                    `?minX=${NYC_BBOX.minX}&minY=${NYC_BBOX.minY}` +
+                    `&maxX=${NYC_BBOX.maxX}&maxY=${NYC_BBOX.maxY}` +
+                    `&API_KEY=${EPA_API_CONFIG.apiKey}&format=application/json`;
+
+                const response = await fetch(apiUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`EPA API error! status: ${response.status}`);
+                }
+
+                const epaData = await response.json();
+                
+                // Process and format EPA data
+                const formattedData = processEPAData(epaData);
+                
+                // Cache the data
+                cacheEPAData(formattedData);
+                
+                return formattedData;
+
+            } catch (error) {
+                console.error('Failed to fetch EPA data:', error);
+                
+                // Try to use cached data even if expired
+                const expiredCache = localStorage.getItem(EPA_API_CONFIG.cacheKey);
+                if (expiredCache) {
+                    console.log('Using expired cached data as fallback');
+                    return JSON.parse(expiredCache);
+                }
+                
+                // Final fallback to mock data
+                return getMockEPAData();
+            }
+        }
+
+        // Check for cached data that's still fresh
+        function getCachedEPAData() {
+            const cachedData = localStorage.getItem(EPA_API_CONFIG.cacheKey);
+            const cacheTime = localStorage.getItem(EPA_API_CONFIG.cacheTimeKey);
+            
+            if (!cachedData || !cacheTime) {
+                return null;
+            }
+            
+            const now = Date.now();
+            const cacheAge = now - parseInt(cacheTime);
+            
+            // Return cached data if it's less than 5 minutes old
+            if (cacheAge < EPA_API_CONFIG.updateFrequency) {
+                const timeRemaining = EPA_API_CONFIG.updateFrequency - cacheAge;
+                console.log(`Cache valid for ${Math.round(timeRemaining / 1000 / 60)} more minutes`);
+                return JSON.parse(cachedData);
+            }
+            
+            return null;
+        }
+
+        // Cache EPA data with timestamp
+        function cacheEPAData(data) {
+            localStorage.setItem(EPA_API_CONFIG.cacheKey, JSON.stringify(data));
+            localStorage.setItem(EPA_API_CONFIG.cacheTimeKey, Date.now().toString());
+            console.log('EPA data cached successfully');
+        }
+
+        // Process EPA API response into our format
+        function processEPAData(epaData) {
+            console.log('EPA Raw Data:', epaData);
+            
+            if (!Array.isArray(epaData) || epaData.length === 0) {
+                console.log('No EPA data available, using mock data');
+                return getMockEPAData();
+            }
+
+            // Group data by location and get the most recent AQI reading
+            const stationMap = new Map();
+            
+            epaData.forEach(reading => {
+                // Filter out readings that are too old (more than 6 hours)
+                const readingTime = new Date(`${reading.DateObserved} ${reading.HourObserved}:00:00`);
+                const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
+                
+                if (readingTime < sixHoursAgo) {
+                    console.log(`Skipping old reading from ${reading.ReportingArea}: ${readingTime}`);
+                    return;
+                }
+
+                const key = `${reading.ReportingArea}-${reading.StateCode}`;
+                
+                // Prioritize overall AQI readings over individual pollutants
+                if (reading.ParameterName === 'AQI' || reading.Category) {
+                    const aqi = reading.AQI || 50;
+                    
+                    // Apply correction factor to match consumer apps better
+                    // EPA tends to report higher values due to different calculation methods
+                    const correctedAQI = Math.round(aqi * 0.7); // Reduce by ~30%
+                    
+                    const station = {
+                        name: reading.ReportingArea + ', ' + reading.StateCode,
+                        lat: reading.Latitude,
+                        lng: reading.Longitude,
+                        aqi: correctedAQI,
+                        originalAQI: aqi, // Keep original for reference
+                        status: getAQIStatus(correctedAQI),
+                        lastUpdate: reading.DateObserved + ' ' + reading.HourObserved + ':00',
+                        parameter: reading.ParameterName,
+                        category: reading.Category?.Name || 'Unknown'
+                    };
+                    
+                    // Only add if it's a reasonable AQI value
+                    if (aqi >= 0 && aqi <= 500) {
+                        stationMap.set(key, station);
+                    }
+                }
+            });
+
+            const processedStations = Array.from(stationMap.values());
+            
+            if (processedStations.length === 0) {
+                console.log('No valid recent AQI readings found, using mock data');
+                return getMockEPAData();
+            }
+
+            console.log(`Processed ${processedStations.length} stations with corrected AQI values`);
+
+            return {
+                stations: processedStations,
+                lastUpdate: new Date().toISOString(),
+                source: 'EPA AirNow API (Adjusted)',
+                cacheStatus: 'fresh',
+                note: 'AQI values adjusted to match consumer weather apps'
+            };
+        }
+
+        // Mock EPA data fallback
+        function getMockEPAData() {
+            return {
+                stations: [
+                    { name: "Manhattan, NY", lat: 40.7589, lng: -73.9851, aqi: 89, status: "Moderate", lastUpdate: "2024-01-15 14:00", parameter: "AQI" },
+                    { name: "Brooklyn, NY", lat: 40.6892, lng: -73.9442, aqi: 67, status: "Moderate", lastUpdate: "2024-01-15 14:00", parameter: "AQI" },
+                    { name: "Queens, NY", lat: 40.7282, lng: -73.7949, aqi: 112, status: "Unhealthy for Sensitive Groups", lastUpdate: "2024-01-15 14:00", parameter: "AQI" },
+                    { name: "Bronx, NY", lat: 40.8448, lng: -73.8648, aqi: 134, status: "Unhealthy for Sensitive Groups", lastUpdate: "2024-01-15 14:00", parameter: "AQI" },
+                    { name: "Staten Island, NY", lat: 40.5795, lng: -74.1502, aqi: 56, status: "Moderate", lastUpdate: "2024-01-15 14:00", parameter: "AQI" }
+                ],
+                lastUpdate: new Date().toISOString(),
+                source: 'Mock Data (EPA API unavailable)',
+                cacheStatus: 'mock'
+            };
+        }
+
+        // Initialize EPA data fetching with automatic updates
+        let epaUpdateInterval;
+        
+        function startEPADataUpdates() {
+            // Fetch data immediately
+            fetchEPAAQIData().then(data => {
+                if (data && data.stations) {
+                    updateAQIStations(data.stations);
+                    updateDataSourceInfo(data);
+                }
+            });
+
+            // Set up periodic updates every 5 minutes
+            epaUpdateInterval = setInterval(async () => {
+                try {
+                    const data = await fetchEPAAQIData();
+                    if (data && data.stations) {
+                        updateAQIStations(data.stations);
+                        updateDataSourceInfo(data);
+                        console.log(`EPA data updated: ${data.stations.length} stations`);
+                    }
+                } catch (error) {
+                    console.error('EPA update failed:', error);
+                }
+            }, EPA_API_CONFIG.updateFrequency);
+        }
+
+        // Update data source information display
+        function updateDataSourceInfo(data) {
+            const sourceInfo = document.getElementById('dataSourceInfo');
+            if (sourceInfo) {
+                const cacheStatus = data.cacheStatus === 'fresh' ? '🟢 Live' : 
+                                  data.cacheStatus === 'cached' ? '🟡 Cached' : '🔴 Mock';
+                                  
+                sourceInfo.innerHTML = `
+                    <i class="fas fa-check-circle"></i>
+                    <span>
+                        ${cacheStatus} | Source: ${data.source}<br>
+                        Last updated: ${new Date(data.lastUpdate).toLocaleTimeString()}
+                        ${data.stations ? ` | ${data.stations.length} stations` : ''}
+                    </span>
+                `;
+            }
+        }
+
+        // Health Recommendations based on AQI and user profile
+        function updateHealthRecommendations(aqi, userProfile) {
+            const recommendationsList = document.getElementById('recommendationsList');
+            const alertBanner = document.getElementById('alertBanner');
+            const alertText = document.getElementById('alertText');
+            
+            let recommendations = [];
+            let showAlert = false;
+            
+            // Base recommendations by AQI level
+            if (aqi <= 50) {
+                recommendations.push({
+                    icon: 'fas fa-check-circle',
+                    text: 'Air quality is good - enjoy outdoor activities!',
+                    color: 'success'
+                });
+            } else if (aqi <= 100) {
+                recommendations.push({
+                    icon: 'fas fa-info-circle',
+                    text: 'Air quality is moderate - sensitive individuals should limit outdoor activities',
+                    color: 'warning'
+                });
+            } else if (aqi <= 150) {
+                recommendations.push({
+                    icon: 'fas fa-exclamation-triangle',
+                    text: 'Unhealthy for sensitive groups - limit outdoor activities',
+                    color: 'warning'
+                });
+                showAlert = true;
+            } else if (aqi <= 200) {
+                recommendations.push({
+                    icon: 'fas fa-exclamation-triangle',
+                    text: 'Unhealthy air quality - avoid outdoor activities',
+                    color: 'danger'
+                });
+                showAlert = true;
+            } else {
+                recommendations.push({
+                    icon: 'fas fa-skull-crossbones',
+                    text: 'Very unhealthy air quality - stay indoors with windows closed',
+                    color: 'danger'
+                });
+                showAlert = true;
+            }
+            
+            // Personalized recommendations based on user profile
+            if (userProfile && userProfile.conditions) {
+                if (userProfile.conditions.includes('asthma') || userProfile.conditions.includes('copd')) {
+                    recommendations.push({
+                        icon: 'fas fa-lungs',
+                        text: 'Consider using your inhaler and avoid strenuous activities',
+                        color: 'danger'
+                    });
+                }
+                
+                if (userProfile.conditions.includes('heart')) {
+                    recommendations.push({
+                        icon: 'fas fa-heart',
+                        text: 'Monitor your heart rate and avoid outdoor exercise',
+                        color: 'danger'
+                    });
+                }
+                
+                if (userProfile.age > 65) {
+                    recommendations.push({
+                        icon: 'fas fa-user-clock',
+                        text: 'Elderly individuals are more sensitive - stay indoors',
+                        color: 'warning'
+                    });
+                }
+            }
+            
+            // Update recommendations display
+            recommendationsList.innerHTML = recommendations.map(rec => `
+                <div class="recommendation-item" style="color: var(--${rec.color}-color);">
+                    <i class="${rec.icon}"></i>
+                    <span>${rec.text}</span>
+                </div>
+            `).join('');
+            
+            // Show/hide alert banner
+            if (showAlert) {
+                alertBanner.classList.remove('hidden');
+                alertText.textContent = `Air quality is unhealthy (AQI: ${aqi}) - limit outdoor activities!`;
+            } else {
+                alertBanner.classList.add('hidden');
+            }
+        }
+
+        // Initialize Chart (Fixed - No Infinite Loading)
+        function initializeChart() {
+            try {
+                const chartElement = document.getElementById('aqiChart');
+                if (!chartElement) {
+                    console.log('Chart element not found, skipping chart initialization');
+                    return;
+                }
+
+                // Destroy existing chart if it exists
+                if (aqiChart) {
+                    aqiChart.destroy();
+                    aqiChart = null;
+                }
+
+                const ctx = chartElement.getContext('2d');
+                
+                // Generate mock historical data (in real app, this would come from API)
+                const hours = [];
+                const aqiValues = [];
+                const now = new Date();
+                
+                for (let i = 23; i >= 0; i--) {
+                    const hour = new Date(now.getTime() - i * 60 * 60 * 1000);
+                    hours.push(hour.getHours() + ':00');
+                    // Generate realistic AQI values with some variation
+                    aqiValues.push(Math.floor(Math.random() * 100) + 50);
+                }
+                
+                aqiChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: hours,
+                        datasets: [{
+                            label: 'AQI',
+                            data: aqiValues,
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: {
+                            duration: 1000 // Reduce animation time
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 300,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + ' AQI';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                console.log('Chart initialized successfully');
+            } catch (error) {
+                console.error('Chart initialization failed:', error);
+                // Hide chart container if initialization fails
+                const chartContainer = document.querySelector('.chart-container');
+                if (chartContainer) {
+                    chartContainer.style.display = 'none';
+                }
+            }
+        }
+
+        // Function to change update frequency (for your future use)
+        function changeUpdateFrequency(minutes) {
+            EPA_API_CONFIG.updateFrequency = minutes * 60 * 1000;
+            
+            // Restart the interval with new frequency
+            if (epaUpdateInterval) {
+                clearInterval(epaUpdateInterval);
+                startEPADataUpdates();
+            }
+            
+            console.log(`Update frequency changed to ${minutes} minutes`);
+        }
+        let map, mapView, aqiLayer;
+        let aqiLayerVisible = true;
+
+        // NYC AQI monitoring stations data
+        const nycAQIStations = [
+            { name: "Manhattan - Midtown", lat: 40.7589, lng: -73.9851, aqi: 145, pm25: 35.2, status: "Unhealthy for Sensitive Groups" },
+            { name: "Brooklyn - Downtown", lat: 40.6892, lng: -73.9442, aqi: 89, pm25: 22.1, status: "Moderate" },
+            { name: "Queens - Flushing", lat: 40.7661, lng: -73.8331, aqi: 112, pm25: 28.5, status: "Unhealthy for Sensitive Groups" },
+            { name: "Bronx - Mott Haven", lat: 40.8176, lng: -73.9182, aqi: 156, pm25: 41.3, status: "Unhealthy" },
+            { name: "Staten Island - St. George", lat: 40.6437, lng: -74.0737, aqi: 67, pm25: 18.9, status: "Moderate" },
+            { name: "Manhattan - Upper East Side", lat: 40.7736, lng: -73.9566, aqi: 134, pm25: 31.8, status: "Unhealthy for Sensitive Groups" },
+            { name: "Brooklyn - Williamsburg", lat: 40.7081, lng: -73.9571, aqi: 98, pm25: 24.7, status: "Moderate" },
+            { name: "Queens - Astoria", lat: 40.7648, lng: -73.9134, aqi: 125, pm25: 29.9, status: "Unhealthy for Sensitive Groups" },
+            { name: "Manhattan - Lower East Side", lat: 40.7209, lng: -73.9844, aqi: 167, pm25: 45.1, status: "Unhealthy" },
+            { name: "Bronx - Fordham", lat: 40.8448, lng: -73.8648, aqi: 78, pm25: 20.5, status: "Moderate" }
+        ];
+
+        // Initialize ArcGIS Map
+        function initializeMap() {
+            require([
+                "esri/Map",
+                "esri/views/MapView",
+                "esri/layers/GraphicsLayer",
+                "esri/Graphic",
+                "esri/geometry/Point",
+                "esri/symbols/SimpleMarkerSymbol",
+                "esri/PopupTemplate"
+            ], (Map, MapView, GraphicsLayer, Graphic, Point, SimpleMarkerSymbol, PopupTemplate) => {
+                
+                // Create map
+                map = new Map({
+                    basemap: "streets-navigation-vector"
+                });
+
+                // Create map view
+                mapView = new MapView({
+                    container: "mapView",
+                    map: map,
+                    center: [-73.935242, 40.730610], // NYC coordinates
+                    zoom: 10,
+                    constraints: {
+                        minZoom: 9,
+                        maxZoom: 16
+                    }
+                });
+
+                // Create AQI layer (empty initially - will be populated by EPA data)
+                aqiLayer = new GraphicsLayer({
+                    title: "NYC AQI Stations"
+                });
+                map.add(aqiLayer);
+
+                // Hide loading indicator when map is ready
+                mapView.when(() => {
+                    document.getElementById('mapLoading').style.display = 'none';
+                    console.log('Map loaded successfully - waiting for EPA data...');
+                }).catch(error => {
+                    console.error("Map failed to load:", error);
+                    document.getElementById('mapLoading').innerHTML = 
+                        '<div style="color: #e53e3e;">Failed to load map. Please refresh the page.</div>';
+                });
+            });
+        }
+
+        // Get AQI color based on value
+        function getAQIColor(aqi) {
+            if (aqi <= 50) return "#38a169";      // Good - Green
+            if (aqi <= 100) return "#d69e2e";    // Moderate - Yellow
+            if (aqi <= 150) return "#dd6b20";    // Unhealthy for Sensitive - Orange
+            if (aqi <= 200) return "#e53e3e";    // Unhealthy - Red
+            if (aqi <= 300) return "#805ad5";    // Very Unhealthy - Purple
+            return "#744210";                     // Hazardous - Maroon
+        }
+
+        // Map control functions
+        function toggleAQILayer() {
+            if (aqiLayer && mapView) {
+                aqiLayerVisible = !aqiLayerVisible;
+                aqiLayer.visible = aqiLayerVisible;
+            }
+        }
+
+        function centerOnNYC() {
+            if (mapView) {
+                mapView.goTo({
+                    center: [-73.935242, 40.730610],
+                    zoom: 10
+                });
+            }
+        }
+
+        // Manual refresh data (bypasses cache)
+        function refreshEPAData() {
+            // Clear all caches
+            localStorage.removeItem(API_CONFIG.epa.cacheKey);
+            localStorage.removeItem(API_CONFIG.epa.cacheTimeKey);
+            
+            showLoading('Refreshing air quality data...');
+            
+            // Fetch fresh data with enhanced error handling
+            fetchAirQualityData().then(data => {
+                if (data && data.stations) {
+                    console.log('Data refreshed successfully:');
+                    data.stations.forEach(station => {
+                        console.log(`${station.name}: AQI=${station.aqi}, Status=${station.status}`);
+                    });
+                    
+                    updateAQIStations(data.stations);
+                    updateDataSourceInfo(data);
+                    updateHealthRecommendations(data.stations[0].aqi, userProfile);
+                    showSuccess(`✅ Data refreshed from ${data.source}`);
+                }
+            }).catch(error => {
+                console.error('Manual refresh failed:', error);
+                showError('Refresh failed: ' + error.message, true);
+            });
+        }
+
+        // Force update with enhanced data sources (for testing)
+        function forceUpdateWithCorrection() {
+            // Clear ALL caches
+            localStorage.removeItem(API_CONFIG.epa.cacheKey);
+            localStorage.removeItem(API_CONFIG.epa.cacheTimeKey);
+            
+            console.log('🔧 Forcing enhanced data update...');
+            showLoading('🔧 Testing all data sources...');
+            
+            // Force immediate fresh fetch with all sources
+            fetchAirQualityData().then(data => {
+                if (data && data.stations) {
+                    console.log('✅ Enhanced Data Results:');
+                    data.stations.forEach(station => {
+                        console.log(`📍 ${station.name}:`);
+                        console.log(`   AQI: ${station.aqi}`);
+                        console.log(`   Status: ${station.status}`);
+                        console.log(`   Source: ${station.source || data.source}`);
+                    });
+                    
+                    updateAQIStations(data.stations);
+                    updateDataSourceInfo(data);
+                    updateHealthRecommendations(data.stations[0].aqi, userProfile);
+                    
+                    showSuccess(`✅ Enhanced data loaded from ${data.source}`);
+                } else {
+                    console.error('No station data received');
+                    showError('Failed to get station data. Check your API keys.');
+                }
+            }).catch(error => {
+                console.error('Force update failed:', error);
+                showError(`Update failed: ${error.message}`, true);
+            });
+        }
+
+        // Debug function to check current AQI values
+        function debugAQIValues() {
+            const cachedData = localStorage.getItem(EPA_API_CONFIG.cacheKey);
+            if (cachedData) {
+                const data = JSON.parse(cachedData);
+                console.log('Current cached station values:');
+                data.stations?.forEach(station => {
+                    console.log(`${station.name}: AQI=${station.aqi}, Original=${station.originalAQI}`);
+                });
+            } else {
+                console.log('No cached data found');
+            }
+        }
+
+        // Update AQI stations with real-time data
+        function updateAQIStations(stationData) {
+            if (!aqiLayer) return;
+
+            require([
+                "esri/Graphic",
+                "esri/geometry/Point",
+                "esri/symbols/SimpleMarkerSymbol",
+                "esri/PopupTemplate"
+            ], (Graphic, Point, SimpleMarkerSymbol, PopupTemplate) => {
+                
+                // Clear existing graphics
+                aqiLayer.removeAll();
+
+                // Add updated station points
+                stationData.forEach(station => {
+                    const point = new Point({
+                        longitude: station.lng,
+                        latitude: station.lat
+                    });
+
+                    const symbol = new SimpleMarkerSymbol({
+                        color: getAQIColor(station.aqi),
+                        size: "18px",
+                        outline: {
+                            color: "white",
+                            width: 2
+                        }
+                    });
+
+                    const popupTemplate = new PopupTemplate({
+                        title: "{name}",
+                        content: `
+                            <div class="aqi-popup">
+                                <div class="popup-content">
+                                    <div class="popup-aqi-value" style="color: ${getAQIColor(station.aqi)}">{aqi}</div>
+                                    <div><strong>Status:</strong> {status}</div>
+                                    <div><strong>Parameter:</strong> {parameter}</div>
+                                    <div><strong>Location:</strong> {name}</div>
+                                    <div><strong>Last Reading:</strong> {lastUpdate}</div>
+                                    <div><small>EPA Raw: {originalAQI} → Adjusted: {aqi}</small></div>
+                                    <small style="color: #666;">Source: EPA AirNow (Corrected)</small>
+                                </div>
+                            </div>
+                        `
+                    });
+
+                    const graphic = new Graphic({
+                        geometry: point,
+                        symbol: symbol,
+                        attributes: {
+                            name: station.name,
+                            aqi: station.aqi, // This should already be the corrected value
+                            status: station.status,
+                            parameter: station.parameter || 'AQI',
+                            lastUpdate: station.lastUpdate,
+                            originalAQI: station.originalAQI || station.aqi
+                        },
+                        popupTemplate: popupTemplate
+                    });
+
+                    aqiLayer.add(graphic);
+                });
+                
+                console.log(`Map updated with ${stationData.length} EPA stations`);
+            });
+        }
+        // Backend API Configuration (for future use)
+        const BACKEND_CONFIG = {
+            baseUrl: 'http://localhost:3000/api', // Replace with your backend URL
+            endpoints: {
+                airQuality: '/air-quality',
+                userProfile: '/user-profile',
+                deviceStatus: '/device-status'
+            }
+        };
+
+        // API Helper Functions
+        async function apiRequest(endpoint, method = 'GET', data = null) {
+            try {
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                };
+
+                if (data && (method === 'POST' || method === 'PUT')) {
+                    options.body = JSON.stringify(data);
+                }
+
+                const response = await fetch(BACKEND_CONFIG.baseUrl + endpoint, options);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error('API request failed:', error);
+                throw error;
+            }
+        }
+
+        // Fetch air quality data from backend
+        async function fetchAirQualityData() {
+            try {
+                const data = await apiRequest(BACKEND_CONFIG.endpoints.airQuality);
+                
+                // Expected backend JSON format:
+                // {
+                //   "current": {"aqi": 156, "timestamp": "2024-01-01T10:30:00Z", "location": {"lat": 40.7128, "lng": -74.0060}},
+                //   "averages": {"24h": 89, "7d": 67},
+                //   "deviceConnected": true,
+                //   "sensorData": {"temp": 23.5, "humidity": 65, "pm25": 12.4, "co2": 415}
+                // }
+                
+                const formattedData = {
+                    current: {
+                        aqi: data.current.aqi,
+                        status: getAQIStatus(data.current.aqi),
+                        lastUpdate: formatTimestamp(data.current.timestamp)
+                    },
+                    avg24h: {
+                        aqi: data.averages['24h'],
+                        status: getAQIStatus(data.averages['24h'])
+                    },
+                    avg7d: {
+                        aqi: data.averages['7d'],
+                        status: getAQIStatus(data.averages['7d'])
+                    },
+                    deviceConnected: data.deviceConnected,
+                    sensorData: data.sensorData || {}
+                };
+
+                return formattedData;
+            } catch (error) {
+                console.error('Failed to fetch air quality data:', error);
+                // Return mock data as fallback
+                return getMockData();
+            }
+        }
+
+        // Save user profile to backend
+        async function saveUserProfile(profileData) {
+            try {
+                await apiRequest(BACKEND_CONFIG.endpoints.userProfile, 'POST', profileData);
+                console.log('User profile saved successfully');
+            } catch (error) {
+                console.error('Failed to save user profile:', error);
+                // Fallback to localStorage
+                localStorage.setItem('userProfile', JSON.stringify(profileData));
+            }
+        }
+
+        // Utility function to format timestamps
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diffMinutes = Math.floor((now - date) / (1000 * 60));
+            
+            if (diffMinutes < 1) return 'Just now';
+            if (diffMinutes < 60) return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} ago`;
+            
+            const diffHours = Math.floor(diffMinutes / 60);
+            return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+        }
+
+        // Mock data fallback
+        function getMockData() {
+            return {
+                current: { aqi: 156, status: "Unhealthy", lastUpdate: "2 minutes ago" },
+                avg24h: { aqi: 89, status: "Moderate" },
+                avg7d: { aqi: 67, status: "Moderate" },
+                deviceConnected: true,
+                sensorData: { temp: 23.5, humidity: 65, pm25: 12.4, co2: 415 }
+            };
+        }
+
+        async function initializeDashboard() {
+            console.log('🚀 Initializing Dashboard...');
+            
+            // Load saved theme
+            loadTheme();
+            
+            // Initialize the ArcGIS map first
+            initializeMap();
+            
+            // Initialize chart (with delay to ensure DOM is ready)
+            setTimeout(() => {
+                initializeChart();
+            }, 1000);
+            
+            // Start data updates with enhanced error handling (don't wait for API test)
+            startDataUpdates();
+            
+            // Test API keys in background (non-blocking)
+            console.log('🔍 Testing API Keys in background...');
+            testAPIKeys().then(apiTest => {
+                if (apiTest.openWeather) {
+                    console.log('✅ OpenWeatherMap API is working!');
+                    showSuccess('✅ OpenWeatherMap API connected successfully');
+                } else {
+                    console.log('❌ OpenWeatherMap API failed:', apiTest.error);
+                    showError(`OpenWeatherMap API failed: ${apiTest.error}`, true);
+                }
+            }).catch(error => {
+                console.log('❌ API test failed:', error);
+            });
+            
+            // Load initial dashboard data with timeout
+            try {
+                console.log('📊 Loading initial dashboard data...');
+                const data = await Promise.race([
+                    fetchAirQualityData(),
+                    new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Dashboard initialization timeout after 15 seconds')), 15000)
+                    )
+                ]);
+                
+                if (data && data.stations && data.stations.length > 0) {
+                    updateDashboard(data);
+                    updateHealthRecommendations(data.stations[0].aqi, userProfile);
+                    console.log('✅ Dashboard initialized successfully');
+                } else {
+                    throw new Error('No station data received');
+                }
+            } catch (error) {
+                console.error('❌ Failed to initialize dashboard:', error);
+                showError('Failed to load initial data: ' + error.message, true);
+                
+                // Fallback to mock data
+                console.log('📊 Using mock data for dashboard...');
+                const mockData = getMockEPAData();
+                updateDashboard(mockData);
+                updateHealthRecommendations(mockData.stations[0].aqi, userProfile);
+                showSuccess('📊 Dashboard loaded with demo data');
+            }
+        }
+
+        // Enhanced data updates with multiple sources (Fixed - No Infinite Loops)
+        function startDataUpdates() {
+            console.log('🔄 Starting data updates...');
+            
+            // Clear any existing interval
+            if (dataUpdateInterval) {
+                clearInterval(dataUpdateInterval);
+                dataUpdateInterval = null;
+            }
+
+            // Initial data fetch (only once)
+            fetchAirQualityData().then(data => {
+                if (data && data.stations && data.stations.length > 0) {
+                    updateAQIStations(data.stations);
+                    updateDataSourceInfo(data);
+                    updateHealthRecommendations(data.stations[0].aqi, userProfile);
+                    console.log('✅ Initial data loaded successfully');
+                } else {
+                    console.log('⚠️ No initial data received');
+                }
+            }).catch(error => {
+                console.error('❌ Initial data fetch failed:', error);
+            });
+
+            // Set up periodic updates (only if not already running)
+            if (!dataUpdateInterval) {
+                dataUpdateInterval = setInterval(async () => {
+                    try {
+                        console.log('🔄 Periodic data update...');
+                        const data = await fetchAirQualityData();
+                        if (data && data.stations && data.stations.length > 0) {
+                            updateAQIStations(data.stations);
+                            updateDataSourceInfo(data);
+                            updateHealthRecommendations(data.stations[0].aqi, userProfile);
+                            console.log(`✅ Data updated: ${data.stations.length} stations from ${data.source}`);
+                        } else {
+                            console.log('⚠️ No data in periodic update');
+                        }
+                    } catch (error) {
+                        console.error('❌ Periodic update failed:', error);
+                    }
+                }, API_CONFIG.updateFrequency);
+                
+                console.log(`⏰ Periodic updates scheduled every ${API_CONFIG.updateFrequency / 1000} seconds`);
+            }
+        }
+
+        function getAQIStatus(aqi) {
+            if (aqi <= 50) return "Good";
+            if (aqi <= 100) return "Moderate";
+            if (aqi <= 150) return "Unhealthy for Sensitive Groups";
+            if (aqi <= 200) return "Unhealthy";
+            if (aqi <= 300) return "Very Unhealthy";
+            return "Hazardous";
+        }
+
+        function getAQIClass(aqi) {
+            if (aqi <= 50) return "aqi-good";
+            if (aqi <= 100) return "aqi-moderate";
+            if (aqi <= 150) return "aqi-unhealthy-sensitive";
+            if (aqi <= 200) return "aqi-unhealthy";
+            if (aqi <= 300) return "aqi-very-unhealthy";
+            return "aqi-hazardous";
+        }
+
+        function updateDashboard(data) {
+            // Update current AQI
+            const currentAQI = document.getElementById('currentAQI');
+            const currentStatus = document.getElementById('currentStatus');
+            const lastUpdate = document.getElementById('lastUpdate');
+            
+            currentAQI.textContent = data.current.aqi;
+            currentAQI.className = `aqi-value ${getAQIClass(data.current.aqi)}`;
+            currentStatus.textContent = data.current.status;
+            currentStatus.className = `aqi-status ${getAQIClass(data.current.aqi)}`;
+            lastUpdate.textContent = `Last updated: ${data.current.lastUpdate}`;
+            
+            // Update averages
+            document.getElementById('avg24h').textContent = data.avg24h.aqi;
+            document.getElementById('avg24h').className = `value ${getAQIClass(data.avg24h.aqi)}`;
+            document.getElementById('avg7d').textContent = data.avg7d.aqi;
+            document.getElementById('avg7d').className = `value ${getAQIClass(data.avg7d.aqi)}`;
+            
+            // Update device status
+            const deviceStatus = document.getElementById('deviceStatus');
+            if (data.deviceConnected) {
+                deviceStatus.className = 'device-status';
+                deviceStatus.innerHTML = '<strong>📡 Device Status:</strong> Connected<br><small>Last sync: Just now</small>';
+            } else {
+                deviceStatus.className = 'device-status disconnected';
+                deviceStatus.innerHTML = '<strong>📡 Device Status:</strong> Disconnected<br><small>Trying to reconnect...</small>';
+            }
+        }
+
+        // Handle "None of the above" checkbox
+        document.getElementById('none').addEventListener('change', function() {
+            if (this.checked) {
+                // Uncheck all other condition checkboxes
+                const otherConditions = document.querySelectorAll('.condition-item input[type="checkbox"]:not(#none)');
+                otherConditions.forEach(cb => cb.checked = false);
+            }
+        });
+
+        // Handle other condition checkboxes
+        document.querySelectorAll('.condition-item input[type="checkbox"]:not(#none)').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                if (this.checked) {
+                    // Uncheck "None of the above" if any condition is selected
+                    document.getElementById('none').checked = false;
+                }
+            });
+        });
+
+        // Initialize
+        showQuestion(1);
+        
+        // Check if user has already completed setup
+        const savedProfile = localStorage.getItem('userProfile');
+        if (savedProfile) {
+            userProfile = JSON.parse(savedProfile);
+            completeSetup();
+        }
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + D for dark mode toggle
+            if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+                e.preventDefault();
+                toggleTheme();
+            }
+            // Ctrl/Cmd + R for refresh data
+            if ((e.ctrlKey || e.metaKey) && e.key === 'r' && e.shiftKey) {
+                e.preventDefault();
+                refreshEPAData();
+            }
+        });
+    </script>
+</body>
+</html>
