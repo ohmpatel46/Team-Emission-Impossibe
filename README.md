@@ -4,7 +4,7 @@ A comprehensive air quality monitoring application that tracks air quality data 
 
 ## 🌟 Features
 
-- **Real-time Air Quality Monitoring**: Current AQI readings for 5 NYC locations
+- **Real-time Air Quality Monitoring**: Current AQI readings for User's saved locations (open-source data) and their current location (smart air quality sensor data)
 - **Interactive Dashboard**: Live updates, health recommendations, and location switching
 - **Advanced Analytics**: 24-hour and 7-day breakdowns with peak hours detection
 - **AI-Powered Insights**: Ollama integration for personalized health recommendations
