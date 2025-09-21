@@ -1,0 +1,2578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emission Impossible</title>
+    
+    <!-- ArcGIS Maps SDK for JavaScript -->
+    <link rel="stylesheet" href="https://js.arcgis.com/4.28/esri/themes/dark/main.css">
+    <script src="https://js.arcgis.com/4.28/" defer></script>
+    
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #0f172a;
+            --dark-secondary: #1e293b;
+            --dark-card: #1e293b;
+            --light: #f8fafc;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --text-light: #e2e8f0;
+            --border: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-dark: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            line-height: 1.6;
+        }
+
+        body.dark-mode {
+            background: var(--gradient-dark);
+            color: var(--text-light);
+        }
+
+        body.dark-mode {
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --border: #334155;
+            --dark-card: #1e293b;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Glass morphism effect */
+        .glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        body.dark-mode .glass {
+            background: rgba(30, 41, 59, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Theme Toggle - Modernized */
+        .theme-toggle {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            cursor: pointer;
+            font-size: 20px;
+            z-index: 1000;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1) rotate(15deg);
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        body.dark-mode .theme-toggle {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        /* Header - Modernized */
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.8s ease;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.025em;
+        }
+
+        .header p {
+            font-size: 1.125rem;
+            opacity: 0.95;
+            font-weight: 300;
+        }
+
+        /* Questionnaire - Modernized */
+        .questionnaire {
+            background: white;
+            padding: 48px;
+            border-radius: 24px;
+            box-shadow: var(--shadow-xl);
+            max-width: 640px;
+            margin: 50px auto;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        body.dark-mode .questionnaire {
+            background: var(--dark-card);
+        }
+
+        .questionnaire h1 {
+            text-align: center;
+            color: var(--text-primary);
+            margin-bottom: 32px;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            margin-bottom: 32px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--gradient-primary);
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 3px;
+        }
+
+        .question {
+            margin-bottom: 32px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .question h3 {
+            margin-bottom: 16px;
+            color: var(--text-primary);
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .question input[type="number"] {
+            width: 120px;
+            padding: 12px 16px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        body.dark-mode .question input[type="number"] {
+            background: var(--dark);
+            border-color: var(--border);
+            color: var(--text-light);
+        }
+
+        .question input[type="number"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .question label {
+            display: block;
+            margin-bottom: 12px;
+            cursor: pointer;
+            padding: 12px 16px;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+
+        .question label:hover {
+            background: rgba(99, 102, 241, 0.05);
+            border-color: rgba(99, 102, 241, 0.2);
+        }
+
+        .condition-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .condition-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            border: 2px solid var(--border);
+            background: white;
+        }
+
+        body.dark-mode .condition-item {
+            background: var(--dark);
+            border-color: var(--border);
+        }
+
+        .condition-item:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .condition-item input[type="checkbox"] {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            gap: 16px;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-secondary {
+            background: var(--light);
+            color: var(--text-secondary);
+            border: 2px solid var(--border);
+        }
+
+        body.dark-mode .btn-secondary {
+            background: var(--dark);
+            color: var(--text-light);
+            border-color: var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+            transform: translateY(-1px);
+        }
+
+
+        /* Location Selector */
+        .location-selector {
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-md);
+        }
+
+        body.dark-mode .location-selector {
+            background: var(--dark-card);
+        }
+
+        .location-selector label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+        }
+
+        .location-selector select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 1rem;
+            background: white;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode .location-selector select {
+            background: var(--dark);
+            border-color: var(--border);
+            color: var(--text-light);
+        }
+
+        .location-selector select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        /* Backend Notifications */
+        .backend-notifications {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .backend-notification {
+            background: rgba(99, 102, 241, 0.1);
+            border-left: 4px solid var(--primary);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+        }
+
+        body.dark-mode .backend-notification {
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        /* Dashboard - Modernized */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 32px;
+            margin-top: 32px;
+            animation: fadeIn 0.8s ease;
+        }
+
+        .dashboard-right {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Quick Stats Card */
+        .quick-stats-card h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .stat-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: var(--light);
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+
+        body.dark-mode .stat-box {
+            background: var(--dark);
+        }
+
+        .stat-box:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--gradient-primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.125rem;
+        }
+
+        .stat-info {
+            flex: 1;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* Activity Card */
+        .activity-card h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--light);
+            border-radius: 10px;
+            transition: all 0.2s ease;
+        }
+
+        body.dark-mode .activity-item {
+            background: var(--dark);
+        }
+
+        .activity-item:hover {
+            transform: translateX(4px);
+        }
+
+        .activity-time {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            min-width: 60px;
+        }
+
+        .activity-text {
+            flex: 1;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+        }
+
+        .activity-status {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .activity-status.good {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .activity-status.info {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary);
+        }
+
+        .activity-status.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+
+        /* Detail Pages */
+        .detail-page {
+            display: none;
+            animation: fadeIn 0.8s ease;
+        }
+
+        .detail-page.active {
+            display: block;
+        }
+
+        .detail-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 32px;
+            padding: 24px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        body.dark-mode .detail-header {
+            background: var(--dark-card);
+        }
+
+        .back-btn {
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .detail-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .detail-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .detail-card {
+            background: white;
+            padding: 32px;
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        body.dark-mode .detail-card {
+            background: var(--dark-card);
+        }
+
+        .detail-card h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-weight: 700;
+            font-size: 1.125rem;
+            color: var(--text-primary);
+        }
+
+        .hourly-breakdown {
+            grid-column: 1 / -1;
+        }
+
+        .hourly-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .hour-item {
+            background: var(--light);
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        body.dark-mode .hour-item {
+            background: var(--dark);
+        }
+
+        .hour-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .hour-time {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .hour-aqi {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .daily-breakdown {
+            grid-column: 1 / -1;
+        }
+
+        .daily-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .day-item {
+            background: var(--light);
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        body.dark-mode .day-item {
+            background: var(--dark);
+        }
+
+        .day-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .day-name {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .day-date {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .day-aqi {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .day-status {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .dashboard-card {
+            background: white;
+            padding: 32px;
+            border-radius: 24px;
+            box-shadow: var(--shadow-xl);
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode .dashboard-card {
+            background: var(--dark-card);
+        }
+
+        .dashboard-left {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Current AQI Card - Modernized */
+        .current-aqi-card {
+            background: var(--gradient-primary);
+            color: white;
+            text-align: center;
+            padding: 32px;
+            border-radius: 24px;
+            box-shadow: var(--shadow-xl);
+        }
+
+        .aqi-value {
+            font-size: 5rem;
+            font-weight: 800;
+            line-height: 1;
+            margin: 16px 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .aqi-status {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            opacity: 0.95;
+        }
+
+        .aqi-last-update {
+            font-size: 0.875rem;
+            opacity: 0.8;
+        }
+
+        /* AQI Info Cards - Modernized */
+        .aqi-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .aqi-info-card {
+            background: var(--light);
+            padding: 20px;
+            border-radius: 16px;
+            border-left: 4px solid var(--primary);
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode .aqi-info-card {
+            background: var(--dark);
+        }
+
+        .aqi-info-card:hover {
+            transform: translateX(4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .clickable-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .clickable-card:hover {
+            transform: translateX(4px) scale(1.02);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .card-hint {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            opacity: 0.7;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .aqi-info-card h4 {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .aqi-info-card .value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .aqi-info-card small {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+        }
+
+        /* Device Status - Modernized */
+        .device-status {
+            padding: 20px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .device-status.disconnected {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .device-status-icon {
+            font-size: 1.5rem;
+        }
+
+        .device-status-info {
+            flex: 1;
+        }
+
+        .device-status-info strong {
+            display: block;
+            font-size: 1rem;
+        }
+
+        .device-status-info small {
+            opacity: 0.9;
+            font-size: 0.875rem;
+        }
+
+        /* Health Recommendations - Modernized */
+        .health-recommendations {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
+            border: 2px solid rgba(16, 185, 129, 0.2);
+            border-radius: 20px;
+            padding: 24px;
+        }
+
+        body.dark-mode .health-recommendations {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(5, 150, 105, 0.05));
+            border-color: rgba(16, 185, 129, 0.15);
+        }
+
+        .health-recommendations h4 {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .recommendation-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin: 12px 0;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+
+        body.dark-mode .recommendation-item {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .recommendation-item:hover {
+            transform: translateX(4px);
+        }
+
+        .recommendation-item i {
+            color: var(--success);
+            font-size: 1.125rem;
+            margin-top: 2px;
+        }
+
+
+        /* Map Container - Modernized */
+        .map-section {
+            background: white;
+            padding: 32px;
+            border-radius: 24px;
+            box-shadow: var(--shadow-xl);
+        }
+
+        body.dark-mode .map-section {
+            background: var(--dark-card);
+        }
+
+        .map-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .map-header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .map-container {
+            position: relative;
+            height: 500px;
+            background: var(--light);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+        }
+
+
+        #mapView {
+            width: 100%;
+            height: 100%;
+            border-radius: 16px;
+        }
+
+        /* Map Controls - Modernized */
+        .map-controls {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .map-control-btn {
+            background: white;
+            border: none;
+            padding: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: var(--shadow-md);
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            color: var(--text-primary);
+        }
+
+        body.dark-mode .map-control-btn {
+            background: var(--dark-card);
+            color: var(--text-light);
+        }
+
+        .map-control-btn:hover {
+            transform: scale(1.05);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Alert Banner - Modernized */
+        .alert-banner {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--shadow-lg);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.9; }
+        }
+
+        /* AQI Legend - Modernized */
+        .aqi-legend {
+            margin-top: 24px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.875rem;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .legend-item:hover {
+            background: var(--light);
+            transform: translateX(4px);
+        }
+
+        body.dark-mode .legend-item:hover {
+            background: var(--dark);
+        }
+
+        .legend-color {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Loading States - Modernized */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(99, 102, 241, 0.2);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .loading-card {
+            background: white;
+            padding: 32px 48px;
+            border-radius: 20px;
+            box-shadow: var(--shadow-xl);
+            text-align: center;
+        }
+
+        body.dark-mode .loading-card {
+            background: var(--dark-card);
+        }
+
+        .loading-card .loading-spinner {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 16px;
+        }
+
+        /* Status Messages - Modernized */
+        .status-message {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--shadow-md);
+            animation: slideInRight 0.5s ease;
+        }
+
+        .status-success {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
+            border-left: 4px solid var(--success);
+            color: var(--success);
+        }
+
+        .status-error {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1));
+            border-left: 4px solid var(--danger);
+            color: var(--danger);
+        }
+
+        .status-info {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(79, 70, 229, 0.1));
+            border-left: 4px solid var(--primary);
+            color: var(--primary);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Utility Classes */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .aqi-info-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .detail-content {
+                grid-template-columns: 1fr;
+            }
+            
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 16px;
+            }
+            
+            .questionnaire {
+                padding: 32px 24px;
+                margin: 20px auto;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .aqi-value {
+                font-size: 4rem;
+            }
+            
+            .theme-toggle {
+                top: 20px;
+                right: 20px;
+                width: 44px;
+                height: 44px;
+            }
+            
+            .condition-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .aqi-legend {
+                grid-template-columns: 1fr;
+            }
+            
+            .map-container {
+                height: 400px;
+            }
+
+            .hourly-grid {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            }
+
+            .daily-grid {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.75rem;
+            }
+            
+            .aqi-value {
+                font-size: 3.5rem;
+            }
+            
+            .aqi-info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode">
+        <i class="fas fa-moon"></i>
+    </button>
+
+    <!-- Loading Overlay (for backend data fetch) -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="loading-card">
+            <div class="loading-spinner"></div>
+            <h3>Connecting to Air Quality Monitor...</h3>
+            <p id="loadingStatus">Fetching real-time data</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🌬️ Emission Impossible</h1>
+            <p>Personal air quality tracking and health insights</p>
+        </div>
+
+        <!-- Questionnaire Section -->
+        <div id="questionnaire" class="questionnaire glass">
+            <h1>Health Profile Setup</h1>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <!-- Question 1: Age -->
+            <div class="question" id="q1">
+                <h3>What is your age?</h3>
+                <input type="number" id="age" min="18" max="120" placeholder="Enter your age">
+            </div>
+
+            <!-- Question 2: Sex -->
+            <div class="question hidden" id="q2">
+                <h3>Sex:</h3>
+                <label><input type="radio" name="sex" value="male"> Male</label>
+                <label><input type="radio" name="sex" value="female"> Female</label>
+                <label><input type="radio" name="sex" value="other"> Other</label>
+                <label><input type="radio" name="sex" value="prefer-not-to-say"> Prefer not to say</label>
+            </div>
+
+            <!-- Question 3: Smoking Status -->
+            <div class="question hidden" id="q3">
+                <h3>Smoking status:</h3>
+                <label><input type="radio" name="smoking" value="never"> Never smoked</label>
+                <label><input type="radio" name="smoking" value="former"> Former smoker (quit >1 year ago)</label>
+                <label><input type="radio" name="smoking" value="occasional"> Occasional smoker (few times per month)</label>
+                <label><input type="radio" name="smoking" value="regular"> Regular smoker (daily/weekly)</label>
+            </div>
+
+            <!-- Question 4: Health Conditions -->
+            <div class="question hidden" id="q4">
+                <h3>Do you have any of these pre-existing health conditions?</h3>
+                <div class="condition-grid">
+                    <div class="condition-item">
+                        <input type="checkbox" id="asthma" value="asthma">
+                        <label for="asthma">Asthma</label>
+                    </div>
+                    <div class="condition-item">
+                        <input type="checkbox" id="copd" value="copd">
+                        <label for="copd">COPD</label>
+                    </div>
+                    <div class="condition-item">
+                        <input type="checkbox" id="allergies" value="allergies">
+                        <label for="allergies">Allergic rhinitis/hay fever</label>
+                    </div>
+                    <div class="condition-item">
+                        <input type="checkbox" id="heart" value="heart">
+                        <label for="heart">Heart disease</label>
+                    </div>
+                    <div class="condition-item">
+                        <input type="checkbox" id="diabetes" value="diabetes">
+                        <label for="diabetes">Diabetes</label>
+                    </div>
+                    <div class="condition-item">
+                        <input type="checkbox" id="cancer" value="cancer">
+                        <label for="cancer">Lung cancer/respiratory cancer</label>
+                    </div>
+                    <div class="condition-item">
+                        <input type="checkbox" id="none" value="none">
+                        <label for="none">None of the above</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="nav-buttons">
+                <button class="btn btn-secondary hidden" id="prevBtn" onclick="previousQuestion()">
+                    <i class="fas fa-arrow-left"></i> Previous
+                </button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">
+                    Next <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboard" class="dashboard">
+            <div class="dashboard-left">
+                <!-- Location Selector -->
+                <div class="location-selector">
+                    <label for="locationSelect">Select Location:</label>
+                    <select id="locationSelect" onchange="switchLocation()">
+                        <option value="home">Home</option>
+                        <option value="work">Work</option>
+                        <option value="football">Football Center</option>
+                        <option value="studio">Studio</option>
+                        <option value="daycare">Daycare</option>
+                    </select>
+                </div>
+
+                <!-- Current AQI Card -->
+                <div class="current-aqi-card" id="currentAQICard">
+                    <h2>Current AQI (measured from your sensor)</h2>
+                    <div class="aqi-value" id="currentAQI">--</div>
+                    <div class="aqi-status" id="currentStatus">Loading...</div>
+                    <div class="aqi-last-update" id="lastUpdate">Connecting to device...</div>
+                </div>
+
+                <!-- Average AQI Cards -->
+                <div class="aqi-info-grid">
+                    <div class="aqi-info-card clickable-card" onclick="openDetailPage('24h')">
+                        <h4>24-Hour Avg</h4>
+                        <div class="value" id="avg24h">42</div>
+                        <small id="avg24hStatus">Good</small>
+                        <div class="card-hint"><i class="fas fa-mouse-pointer"></i> Click for details</div>
+                    </div>
+                    <div class="aqi-info-card clickable-card" onclick="openDetailPage('7d')">
+                        <h4>7-Day Avg</h4>
+                        <div class="value" id="avg7d">38</div>
+                        <small id="avg7dStatus">Good</small>
+                        <div class="card-hint"><i class="fas fa-mouse-pointer"></i> Click for details</div>
+                    </div>
+                </div>
+
+                <!-- Device Status -->
+                <div class="device-status" id="deviceStatus">
+                    <div class="device-status-icon">
+                        <i class="fas fa-wifi"></i>
+                    </div>
+                    <div class="device-status-info">
+                        <strong>Device Status</strong>
+                        <small>Connecting...</small>
+                    </div>
+                </div>
+
+                <!-- Health Recommendations -->
+                <div class="health-recommendations" id="healthRecommendations">
+                    <h4><i class="fas fa-heart"></i> Health Recommendations</h4>
+                    <div id="recommendationsList">
+                        <div class="recommendation-item">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>Loading recommendations...</span>
+                        </div>
+                    </div>
+                    <!-- Backend notifications endpoint -->
+                    <div id="backendNotifications" class="backend-notifications"></div>
+                </div>
+
+            </div>
+
+            <!-- Dashboard Right Side - Map and Additional Info -->
+            <div class="dashboard-right">
+                <!-- Map Section -->
+                <div class="map-section dashboard-card">
+                    <div class="map-header">
+                        <h2>🗽 NYC Air Quality Map</h2>
+                    </div>
+                    
+                    <!-- Alert Banner -->
+                    <div id="alertBanner" class="alert-banner hidden">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span id="alertText">Air quality alert</span>
+                    </div>
+
+                    <!-- Status Messages -->
+                    <div id="statusMessages"></div>
+                    
+                    <!-- Map Container -->
+                    <div class="map-container">
+                        <div id="mapView"></div>
+                        <div class="map-controls">
+                            <button class="map-control-btn" onclick="centerOnNYC()" title="Center on NYC">
+                                <i class="fas fa-crosshairs"></i>
+                            </button>
+                            <button class="map-control-btn" onclick="refreshData()" title="Refresh data">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- AQI Legend -->
+                    <div class="aqi-legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #10b981;"></div>
+                            <span>Good (0-50)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #f59e0b;"></div>
+                            <span>Moderate (51-100)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #fb923c;"></div>
+                            <span>Unhealthy for Sensitive (101-150)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #ef4444;"></div>
+                            <span>Unhealthy (151-200)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #a855f7;"></div>
+                            <span>Very Unhealthy (201-300)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #7c2d12;"></div>
+                            <span>Hazardous (300+)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Stats Card -->
+                <div class="quick-stats-card dashboard-card">
+                    <h3><i class="fas fa-chart-bar"></i> Quick Stats</h3>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-icon">
+                                <i class="fas fa-calendar-day"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-value" id="todayAvg">42</div>
+                                <div class="stat-label">Today's Average</div>
+                            </div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-icon">
+                                <i class="fas fa-calendar-week"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-value" id="weekAvg">38</div>
+                                <div class="stat-label">Week's Average</div>
+                            </div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-icon">
+                                <i class="fas fa-trending-up"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-value" id="trend">+2</div>
+                                <div class="stat-label">vs Yesterday</div>
+                            </div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-value" id="peakHour">2 PM</div>
+                                <div class="stat-label">Peak Time</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity Card -->
+                <div class="activity-card dashboard-card">
+                    <h3><i class="fas fa-history"></i> Recent Activity</h3>
+                    <div class="activity-list" id="activityList">
+                        <div class="activity-item">
+                            <div class="activity-time">2 min ago</div>
+                            <div class="activity-text">AQI reading updated</div>
+                            <div class="activity-status good">Good</div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-time">15 min ago</div>
+                            <div class="activity-text">Location switched to Work</div>
+                            <div class="activity-status info">Info</div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-time">1 hour ago</div>
+                            <div class="activity-text">Device reconnected</div>
+                            <div class="activity-status success">Success</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- 24-Hour Detail Page -->
+        <div id="detail24h" class="detail-page">
+            <div class="detail-header">
+                <button class="back-btn" onclick="closeDetailPage()">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </button>
+                <h1 class="detail-title">24-Hour Air Quality Analysis</h1>
+            </div>
+            
+            <div class="detail-content">
+                <div class="detail-card">
+                    <h3><i class="fas fa-chart-bar"></i> Summary Statistics</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Average AQI</span>
+                        <span class="stat-value">42</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Highest AQI</span>
+                        <span class="stat-value">58</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Lowest AQI</span>
+                        <span class="stat-value">28</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Hours in Good Range</span>
+                        <span class="stat-value">22 hours</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Hours in Moderate Range</span>
+                        <span class="stat-value">2 hours</span>
+                    </div>
+                </div>
+
+                <div class="detail-card">
+                    <h3><i class="fas fa-clock"></i> Peak Hours</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Best Air Quality</span>
+                        <span class="stat-value">4:00 AM (28 AQI)</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Worst Air Quality</span>
+                        <span class="stat-value">2:00 PM (58 AQI)</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Morning Average</span>
+                        <span class="stat-value">35 AQI</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Afternoon Average</span>
+                        <span class="stat-value">48 AQI</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Evening Average</span>
+                        <span class="stat-value">41 AQI</span>
+                    </div>
+                </div>
+
+                <div class="detail-card hourly-breakdown">
+                    <h3><i class="fas fa-chart-line"></i> Hourly Breakdown</h3>
+                    <div class="hourly-grid" id="hourlyData24h">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7-Day Detail Page -->
+        <div id="detail7d" class="detail-page">
+            <div class="detail-header">
+                <button class="back-btn" onclick="closeDetailPage()">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </button>
+                <h1 class="detail-title">7-Day Air Quality Analysis</h1>
+            </div>
+            
+            <div class="detail-content">
+                <div class="detail-card">
+                    <h3><i class="fas fa-chart-bar"></i> Weekly Summary</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Average AQI</span>
+                        <span class="stat-value">38</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Highest Daily Average</span>
+                        <span class="stat-value">45 AQI</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Lowest Daily Average</span>
+                        <span class="stat-value">32 AQI</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Days in Good Range</span>
+                        <span class="stat-value">7 days</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Days in Moderate Range</span>
+                        <span class="stat-value">0 days</span>
+                    </div>
+                </div>
+
+                <div class="detail-card">
+                    <h3><i class="fas fa-calendar-week"></i> Weekly Trends</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Best Day</span>
+                        <span class="stat-value">Wednesday (32 AQI)</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Worst Day</span>
+                        <span class="stat-value">Friday (45 AQI)</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Weekday Average</span>
+                        <span class="stat-value">39 AQI</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Weekend Average</span>
+                        <span class="stat-value">36 AQI</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Trend Direction</span>
+                        <span class="stat-value">Stable</span>
+                    </div>
+                </div>
+
+                <div class="detail-card daily-breakdown">
+                    <h3><i class="fas fa-calendar-alt"></i> Daily Breakdown</h3>
+                    <div class="daily-grid" id="dailyData7d">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== CONFIGURATION ====================
+        const BACKEND_CONFIG = {
+            baseUrl: 'http://localhost:3000/api', // Your backend URL
+            endpoints: {
+                airQuality: '/air-quality',
+                userProfile: '/user-profile',
+                deviceStatus: '/device-status',
+                historicalData: '/historical-data'
+            },
+            timeout: 20000, // 20 seconds timeout for backend
+            retryAttempts: 3,
+            retryDelay: 2000 // 2 seconds between retries
+        };
+
+        const NYC_COORDS = {
+            lat: 40.7128,
+            lng: -74.0060
+        };
+
+        // ==================== GLOBAL VARIABLES ====================
+        let currentQuestion = 1;
+        const totalQuestions = 4;
+        let userProfile = {};
+        let currentTheme = 'light';
+        let map, mapView, aqiLayer;
+        let dataUpdateInterval = null;
+        let mockDataTimeout = null;
+        let isUsingMockData = false;
+        let currentLocation = 'home';
+
+        // ==================== MOCK DATA ====================
+        function getMockData() {
+            const mockAQI = Math.floor(Math.random() * 50) + 20; // Random between 20-70
+            return {
+                current: {
+                    aqi: mockAQI,
+                    status: getAQIStatus(mockAQI),
+                    lastUpdate: new Date().toISOString(),
+                    location: NYC_COORDS
+                },
+                averages: {
+                    '24h': 42, // Hardcoded
+                    '7d': 38   // Hardcoded
+                },
+                deviceConnected: true,
+                stations: [
+                    { name: "Home", lat: 40.7589, lng: -73.9851, aqi: Math.floor(Math.random() * 50) + 20, status: "Good" },
+                    { name: "Work", lat: 40.6892, lng: -73.9442, aqi: Math.floor(Math.random() * 50) + 20, status: "Good" },
+                    { name: "Football Center", lat: 40.7282, lng: -73.7949, aqi: Math.floor(Math.random() * 50) + 20, status: "Good" },
+                    { name: "Studio", lat: 40.8448, lng: -73.8648, aqi: Math.floor(Math.random() * 50) + 20, status: "Good" },
+                    { name: "Daycare", lat: 40.5795, lng: -74.1502, aqi: Math.floor(Math.random() * 50) + 20, status: "Good" }
+                ]
+            };
+        }
+
+        // Hardcoded data for detail pages
+        const DETAIL_DATA = {
+            '24h': {
+                hourlyData: [
+                    { hour: '12:00 AM', aqi: 32 },
+                    { hour: '1:00 AM', aqi: 30 },
+                    { hour: '2:00 AM', aqi: 28 },
+                    { hour: '3:00 AM', aqi: 29 },
+                    { hour: '4:00 AM', aqi: 28 },
+                    { hour: '5:00 AM', aqi: 31 },
+                    { hour: '6:00 AM', aqi: 35 },
+                    { hour: '7:00 AM', aqi: 38 },
+                    { hour: '8:00 AM', aqi: 42 },
+                    { hour: '9:00 AM', aqi: 45 },
+                    { hour: '10:00 AM', aqi: 48 },
+                    { hour: '11:00 AM', aqi: 52 },
+                    { hour: '12:00 PM', aqi: 55 },
+                    { hour: '1:00 PM', aqi: 56 },
+                    { hour: '2:00 PM', aqi: 58 },
+                    { hour: '3:00 PM', aqi: 55 },
+                    { hour: '4:00 PM', aqi: 52 },
+                    { hour: '5:00 PM', aqi: 48 },
+                    { hour: '6:00 PM', aqi: 45 },
+                    { hour: '7:00 PM', aqi: 42 },
+                    { hour: '8:00 PM', aqi: 40 },
+                    { hour: '9:00 PM', aqi: 38 },
+                    { hour: '10:00 PM', aqi: 35 },
+                    { hour: '11:00 PM', aqi: 33 }
+                ]
+            },
+            '7d': {
+                dailyData: [
+                    { day: 'Monday', date: 'Dec 16', aqi: 35, status: 'Good' },
+                    { day: 'Tuesday', date: 'Dec 17', aqi: 38, status: 'Good' },
+                    { day: 'Wednesday', date: 'Dec 18', aqi: 32, status: 'Good' },
+                    { day: 'Thursday', date: 'Dec 19', aqi: 41, status: 'Good' },
+                    { day: 'Friday', date: 'Dec 20', aqi: 45, status: 'Good' },
+                    { day: 'Saturday', date: 'Dec 21', aqi: 36, status: 'Good' },
+                    { day: 'Sunday', date: 'Dec 22', aqi: 37, status: 'Good' }
+                ]
+            }
+        };
+
+
+
+        // ==================== LOCATION MANAGEMENT ====================
+        function switchLocation() {
+            const locationSelect = document.getElementById('locationSelect');
+            currentLocation = locationSelect.value;
+            
+            // Update dashboard with location-specific data
+            updateLocationSpecificData();
+            
+            console.log('Switched to location:', currentLocation);
+        }
+
+        function updateLocationSpecificData() {
+            // Get location-specific AQI data
+            const locationData = getLocationSpecificData(currentLocation);
+            
+            // Update current AQI display
+            const currentAQI = document.getElementById('currentAQI');
+            const currentStatus = document.getElementById('currentStatus');
+            const lastUpdate = document.getElementById('lastUpdate');
+            
+            currentAQI.textContent = locationData.aqi;
+            currentStatus.textContent = locationData.status;
+            
+            // Update color based on AQI
+            const aqiCard = document.getElementById('currentAQICard');
+            aqiCard.style.background = `linear-gradient(135deg, ${getAQIColor(locationData.aqi)}, ${getAQIColor(locationData.aqi)}dd)`;
+            
+            // Update last update time
+            const updateTime = new Date();
+            lastUpdate.textContent = 'Just updated';
+            
+            // Update health recommendations for this location
+            updateHealthRecommendations(locationData.aqi);
+            
+            // Update alert banner
+            updateAlertBanner(locationData.aqi);
+        }
+
+        function getLocationSpecificData(location) {
+            // Mock location-specific data
+            const locationAQIs = {
+                'home': { aqi: 35, status: 'Good' },
+                'work': { aqi: 42, status: 'Good' },
+                'football': { aqi: 38, status: 'Good' },
+                'studio': { aqi: 45, status: 'Good' },
+                'daycare': { aqi: 32, status: 'Good' }
+            };
+            
+            return locationAQIs[location] || locationAQIs['home'];
+        }
+
+        // ==================== BACKEND NOTIFICATIONS ====================
+        function addBackendNotification(message, type = 'info') {
+            const notificationsContainer = document.getElementById('backendNotifications');
+            if (!notificationsContainer) return;
+            
+            const notification = document.createElement('div');
+            notification.className = `backend-notification`;
+            
+            let icon = 'fas fa-info-circle';
+            if (type === 'success') icon = 'fas fa-check-circle';
+            if (type === 'warning') icon = 'fas fa-exclamation-triangle';
+            if (type === 'error') icon = 'fas fa-times-circle';
+            
+            notification.innerHTML = `
+                <i class="${icon}"></i>
+                <span>${message}</span>
+            `;
+            
+            notificationsContainer.appendChild(notification);
+            
+            // Auto-remove after 10 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 10000);
+        }
+
+        // Public function for backend to call
+        window.addBackendNotification = addBackendNotification;
+
+        // ==================== THEME MANAGEMENT ====================
+        function toggleTheme() {
+            const body = document.body;
+            const themeIcon = document.querySelector('.theme-toggle i');
+            
+            if (currentTheme === 'light') {
+                body.classList.add('dark-mode');
+                themeIcon.className = 'fas fa-sun';
+                currentTheme = 'dark';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                body.classList.remove('dark-mode');
+                themeIcon.className = 'fas fa-moon';
+                currentTheme = 'light';
+                localStorage.setItem('theme', 'light');
+            }
+            
+        }
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                document.querySelector('.theme-toggle i').className = 'fas fa-sun';
+                currentTheme = 'dark';
+            }
+        }
+
+        // ==================== QUESTIONNAIRE FUNCTIONS ====================
+        function updateProgress() {
+            const progress = (currentQuestion / totalQuestions) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        function showQuestion(questionNum) {
+            for (let i = 1; i <= totalQuestions; i++) {
+                document.getElementById(`q${i}`).classList.add('hidden');
+            }
+            document.getElementById(`q${questionNum}`).classList.remove('hidden');
+            
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            
+            if (questionNum === 1) {
+                prevBtn.classList.add('hidden');
+            } else {
+                prevBtn.classList.remove('hidden');
+            }
+            
+            if (questionNum === totalQuestions) {
+                nextBtn.innerHTML = 'Complete Setup <i class="fas fa-check"></i>';
+            } else {
+                nextBtn.innerHTML = 'Next <i class="fas fa-arrow-right"></i>';
+            }
+            
+            updateProgress();
+        }
+
+        function validateCurrentQuestion() {
+            switch(currentQuestion) {
+                case 1:
+                    const age = document.getElementById('age').value;
+                    if (!age || age < 18 || age > 120) {
+                        showStatus('Please enter a valid age (18-120)', 'error');
+                        return false;
+                    }
+                    userProfile.age = age;
+                    break;
+                case 2:
+                    const sex = document.querySelector('input[name="sex"]:checked');
+                    if (!sex) {
+                        showStatus('Please select your sex', 'error');
+                        return false;
+                    }
+                    userProfile.sex = sex.value;
+                    break;
+                case 3:
+                    const smoking = document.querySelector('input[name="smoking"]:checked');
+                    if (!smoking) {
+                        showStatus('Please select your smoking status', 'error');
+                        return false;
+                    }
+                    userProfile.smoking = smoking.value;
+                    break;
+                case 4:
+                    const conditions = Array.from(document.querySelectorAll('input[type="checkbox"]:checked'))
+                        .map(cb => cb.value);
+                    userProfile.conditions = conditions;
+                    break;
+            }
+            return true;
+        }
+
+        function nextQuestion() {
+            if (!validateCurrentQuestion()) return;
+            
+            if (currentQuestion === totalQuestions) {
+                completeSetup();
+                return;
+            }
+            
+            currentQuestion++;
+            showQuestion(currentQuestion);
+        }
+
+        function previousQuestion() {
+            if (currentQuestion > 1) {
+                currentQuestion--;
+                showQuestion(currentQuestion);
+            }
+        }
+
+        async function completeSetup() {
+            console.log('User Profile:', userProfile);
+            
+            // Save profile
+            await saveUserProfile(userProfile);
+            
+            // Hide questionnaire and show dashboard
+            document.getElementById('questionnaire').style.display = 'none';
+            
+            // Initialize dashboard
+            await initializeDashboard();
+        }
+
+        // ==================== BACKEND COMMUNICATION ====================
+        async function fetchFromBackend(endpoint, options = {}) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), BACKEND_CONFIG.timeout);
+            
+            try {
+                const response = await fetch(BACKEND_CONFIG.baseUrl + endpoint, {
+                    ...options,
+                    signal: controller.signal,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    }
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                clearTimeout(timeoutId);
+                if (error.name === 'AbortError') {
+                    throw new Error('Request timeout');
+                }
+                throw error;
+            }
+        }
+
+        async function fetchAirQualityData() {
+            let attempts = 0;
+            
+            while (attempts < BACKEND_CONFIG.retryAttempts) {
+                try {
+                    const data = await fetchFromBackend(BACKEND_CONFIG.endpoints.airQuality);
+                    console.log('Successfully fetched AQI data from backend');
+                    return data;
+                } catch (error) {
+                    attempts++;
+                    console.error(`Backend fetch attempt ${attempts} failed:`, error);
+                    
+                    if (attempts < BACKEND_CONFIG.retryAttempts) {
+                        await new Promise(resolve => setTimeout(resolve, BACKEND_CONFIG.retryDelay));
+                    }
+                }
+            }
+            
+            throw new Error('Failed to fetch data from backend after retries');
+        }
+
+        async function saveUserProfile(profileData) {
+            try {
+                await fetchFromBackend(BACKEND_CONFIG.endpoints.userProfile, {
+                    method: 'POST',
+                    body: JSON.stringify(profileData)
+                });
+                console.log('User profile saved to backend');
+            } catch (error) {
+                console.error('Failed to save profile to backend, using localStorage:', error);
+                localStorage.setItem('userProfile', JSON.stringify(profileData));
+            }
+        }
+
+        // ==================== DASHBOARD INITIALIZATION ====================
+        async function initializeDashboard() {
+            console.log('Initializing dashboard...');
+            
+            // Show loading overlay
+            showLoadingOverlay(true);
+            
+            // Load theme
+            loadTheme();
+            
+            // Initialize map
+            initializeMap();
+            
+            
+            // Set up mock data timeout (20 seconds)
+            mockDataTimeout = setTimeout(() => {
+                if (!isUsingMockData) {
+                    console.log('Backend timeout - switching to mock data');
+                    loadMockData();
+                }
+            }, BACKEND_CONFIG.timeout);
+            
+            // Try to fetch real data
+            try {
+                const data = await fetchAirQualityData();
+                clearTimeout(mockDataTimeout);
+                isUsingMockData = false;
+                updateDashboard(data);
+                showStatus('Connected to air quality monitor', 'success');
+            } catch (error) {
+                console.error('Failed to fetch initial data:', error);
+                // Mock data will be loaded by the timeout
+            }
+            
+            // Hide loading overlay
+            showLoadingOverlay(false);
+            
+            // Start periodic updates
+            startDataUpdates();
+            
+            // Add demo notifications
+            setTimeout(() => {
+                addBackendNotification('Welcome to Emission Impossible! Your air quality monitoring is now active.', 'success');
+            }, 2000);
+            
+            setTimeout(() => {
+                addBackendNotification('All monitoring stations are reporting good air quality levels.', 'info');
+            }, 5000);
+        }
+
+        function loadMockData() {
+            console.log('Loading mock data...');
+            isUsingMockData = true;
+            const mockData = getMockData();
+            updateDashboard(mockData);
+            showStatus('Using demo data (backend unavailable)', 'info');
+        }
+
+        function showLoadingOverlay(show) {
+            const overlay = document.getElementById('loadingOverlay');
+            if (show) {
+                overlay.classList.remove('hidden');
+            } else {
+                overlay.classList.add('hidden');
+            }
+        }
+
+
+        // ==================== MAP FUNCTIONS ====================
+
+        function initializeMap() {
+            if (typeof window.require === 'undefined') {
+                console.error('ArcGIS API not loaded yet');
+                return;
+            }
+
+            window.require([
+                "esri/Map",
+                "esri/views/MapView",
+                "esri/layers/GraphicsLayer",
+                "esri/Graphic",
+                "esri/geometry/Point",
+                "esri/symbols/SimpleMarkerSymbol",
+                "esri/PopupTemplate"
+            ], function(Map, MapView, GraphicsLayer, Graphic, Point, SimpleMarkerSymbol, PopupTemplate) {
+                
+                map = new Map({
+                    basemap: currentTheme === 'dark' ? "dark-gray-vector" : "streets-navigation-vector"
+                });
+
+                mapView = new MapView({
+                    container: "mapView",
+                    map: map,
+                    center: [NYC_COORDS.lng, NYC_COORDS.lat],
+                    zoom: 10,
+                    constraints: {
+                        minZoom: 9,
+                        maxZoom: 16
+                    }
+                });
+
+                aqiLayer = new GraphicsLayer({
+                    title: "AQI Monitoring Stations"
+                });
+                map.add(aqiLayer);
+
+                mapView.when(function() {
+                    console.log('Map loaded successfully');
+                }).catch(function(error) {
+                    console.error("Map failed to load:", error);
+                });
+            }, function(error) {
+                console.error("Failed to load ArcGIS modules:", error);
+            });
+        }
+
+        function updateMapStations(stations) {
+            if (!aqiLayer || !stations) return;
+
+            if (typeof window.require === 'undefined') {
+                console.error('ArcGIS API not loaded yet');
+                return;
+            }
+
+            window.require([
+                "esri/Graphic",
+                "esri/geometry/Point",
+                "esri/symbols/SimpleMarkerSymbol",
+                "esri/PopupTemplate"
+            ], function(Graphic, Point, SimpleMarkerSymbol, PopupTemplate) {
+                
+                aqiLayer.removeAll();
+
+                stations.forEach(station => {
+                    const point = new Point({
+                        longitude: station.lng,
+                        latitude: station.lat
+                    });
+
+                    const symbol = new SimpleMarkerSymbol({
+                        color: getAQIColor(station.aqi),
+                        size: "16px",
+                        outline: {
+                            color: "white",
+                            width: 2
+                        }
+                    });
+
+                    const popupTemplate = new PopupTemplate({
+                        title: "{name}",
+                        content: `
+                            <div style="padding: 8px;">
+                                <div style="font-size: 24px; font-weight: bold; color: ${getAQIColor(station.aqi)}">
+                                    AQI: {aqi}
+                                </div>
+                                <div><strong>Status:</strong> {status}</div>
+                            </div>
+                        `
+                    });
+
+                    const graphic = new Graphic({
+                        geometry: point,
+                        symbol: symbol,
+                        attributes: {
+                            name: station.name,
+                            aqi: station.aqi,
+                            status: station.status
+                        },
+                        popupTemplate: popupTemplate
+                    });
+
+                    aqiLayer.add(graphic);
+                });
+            }, function(error) {
+                console.error("Failed to load ArcGIS modules for station update:", error);
+            });
+        }
+
+
+        function centerOnNYC() {
+            if (mapView) {
+                mapView.goTo({
+                    center: [NYC_COORDS.lng, NYC_COORDS.lat],
+                    zoom: 10
+                });
+            }
+        }
+
+        // ==================== DATA UPDATE FUNCTIONS ====================
+        function startDataUpdates() {
+            // Update every 2 minutes
+            dataUpdateInterval = setInterval(async () => {
+                if (isUsingMockData) {
+                    // Try to reconnect to backend
+                    try {
+                        const data = await fetchAirQualityData();
+                        isUsingMockData = false;
+                        updateDashboard(data);
+                        showStatus('Reconnected to air quality monitor', 'success');
+                    } catch (error) {
+                        // Continue using mock data
+                        const mockData = getMockData();
+                        updateDashboard(mockData);
+                    }
+                } else {
+                    // Normal update from backend
+                    try {
+                        const data = await fetchAirQualityData();
+                        updateDashboard(data);
+                    } catch (error) {
+                        console.error('Update failed:', error);
+                        loadMockData();
+                    }
+                }
+            }, 2 * 60 * 1000); // 2 minutes
+        }
+
+        function updateDashboard(data) {
+            // Update current AQI
+            const currentAQI = document.getElementById('currentAQI');
+            const currentStatus = document.getElementById('currentStatus');
+            const lastUpdate = document.getElementById('lastUpdate');
+            
+            currentAQI.textContent = data.current.aqi;
+            currentStatus.textContent = data.current.status;
+            
+            // Update color based on AQI
+            const aqiCard = document.getElementById('currentAQICard');
+            aqiCard.style.background = `linear-gradient(135deg, ${getAQIColor(data.current.aqi)}, ${getAQIColor(data.current.aqi)}dd)`;
+            
+            // Update last update time
+            const updateTime = new Date(data.current.lastUpdate);
+            const now = new Date();
+            const diffMinutes = Math.floor((now - updateTime) / 60000);
+            if (diffMinutes < 1) {
+                lastUpdate.textContent = 'Just updated';
+            } else if (diffMinutes < 60) {
+                lastUpdate.textContent = `Updated ${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} ago`;
+            } else {
+                lastUpdate.textContent = `Updated ${Math.floor(diffMinutes / 60)} hour${Math.floor(diffMinutes / 60) > 1 ? 's' : ''} ago`;
+            }
+            
+            // Update averages (always use hardcoded values)
+            document.getElementById('avg24h').textContent = '42';
+            document.getElementById('avg24hStatus').textContent = 'Good';
+            document.getElementById('avg7d').textContent = '38';
+            document.getElementById('avg7dStatus').textContent = 'Good';
+            
+            // Update device status
+            const deviceStatus = document.getElementById('deviceStatus');
+            const deviceIcon = deviceStatus.querySelector('.device-status-icon i');
+            const deviceInfo = deviceStatus.querySelector('.device-status-info');
+            
+            if (data.deviceConnected) {
+                deviceStatus.className = 'device-status';
+                deviceIcon.className = 'fas fa-wifi';
+                deviceInfo.innerHTML = '<strong>Device Connected</strong><small>Real-time monitoring active</small>';
+            } else {
+                deviceStatus.className = 'device-status disconnected';
+                deviceIcon.className = 'fas fa-wifi-slash';
+                deviceInfo.innerHTML = '<strong>Device Disconnected</strong><small>Trying to reconnect...</small>';
+            }
+            
+            
+            // Update map
+            if (data.stations) {
+                updateMapStations(data.stations);
+            }
+            
+            // Update health recommendations
+            updateHealthRecommendations(data.current.aqi);
+            
+            // Update alert banner
+            updateAlertBanner(data.current.aqi);
+        }
+
+        function updateHealthRecommendations(aqi) {
+            const recommendationsList = document.getElementById('recommendationsList');
+            let recommendations = [];
+            
+            if (aqi <= 50) {
+                recommendations.push({
+                    icon: 'fas fa-check-circle',
+                    text: 'Air quality is good - enjoy outdoor activities!',
+                    color: '#10b981'
+                });
+            } else if (aqi <= 100) {
+                recommendations.push({
+                    icon: 'fas fa-info-circle',
+                    text: 'Air quality is moderate - unusually sensitive people should consider limiting prolonged outdoor exertion',
+                    color: '#f59e0b'
+                });
+            } else if (aqi <= 150) {
+                recommendations.push({
+                    icon: 'fas fa-exclamation-triangle',
+                    text: 'Unhealthy for sensitive groups - limit prolonged outdoor exertion',
+                    color: '#fb923c'
+                });
+            } else {
+                recommendations.push({
+                    icon: 'fas fa-exclamation-triangle',
+                    text: 'Unhealthy air quality - avoid outdoor activities',
+                    color: '#ef4444'
+                });
+            }
+            
+            // Add personalized recommendations based on user profile
+            if (userProfile.conditions && userProfile.conditions.includes('asthma')) {
+                recommendations.push({
+                    icon: 'fas fa-lungs',
+                    text: 'Keep your inhaler readily available',
+                    color: '#6366f1'
+                });
+            }
+            
+            recommendationsList.innerHTML = recommendations.map(rec => `
+                <div class="recommendation-item">
+                    <i class="${rec.icon}" style="color: ${rec.color}"></i>
+                    <span>${rec.text}</span>
+                </div>
+            `).join('');
+        }
+
+        function updateAlertBanner(aqi) {
+            const alertBanner = document.getElementById('alertBanner');
+            const alertText = document.getElementById('alertText');
+            
+            if (aqi > 100) {
+                alertBanner.classList.remove('hidden');
+                if (aqi > 150) {
+                    alertText.textContent = `Air quality is unhealthy (AQI: ${aqi}) - limit outdoor activities!`;
+                } else {
+                    alertText.textContent = `Air quality is unhealthy for sensitive groups (AQI: ${aqi})`;
+                }
+            } else {
+                alertBanner.classList.add('hidden');
+            }
+        }
+
+        async function refreshData() {
+            showStatus('Refreshing data...', 'info');
+            
+            try {
+                const data = isUsingMockData ? getMockData() : await fetchAirQualityData();
+                updateDashboard(data);
+                showStatus('Data refreshed successfully', 'success');
+            } catch (error) {
+                console.error('Refresh failed:', error);
+                showStatus('Failed to refresh data', 'error');
+            }
+        }
+
+        // ==================== UTILITY FUNCTIONS ====================
+        function getAQIStatus(aqi) {
+            if (aqi <= 50) return "Good";
+            if (aqi <= 100) return "Moderate";
+            if (aqi <= 150) return "Unhealthy for Sensitive Groups";
+            if (aqi <= 200) return "Unhealthy";
+            if (aqi <= 300) return "Very Unhealthy";
+            return "Hazardous";
+        }
+
+        function getAQIColor(aqi) {
+            if (aqi <= 50) return "#10b981";
+            if (aqi <= 100) return "#f59e0b";
+            if (aqi <= 150) return "#fb923c";
+            if (aqi <= 200) return "#ef4444";
+            if (aqi <= 300) return "#a855f7";
+            return "#7c2d12";
+        }
+
+        function showStatus(message, type = 'info') {
+            const statusContainer = document.getElementById('statusMessages');
+            if (!statusContainer) return;
+            
+            // Clear existing messages
+            statusContainer.innerHTML = '';
+            
+            const statusDiv = document.createElement('div');
+            statusDiv.className = `status-message status-${type}`;
+            
+            let icon = 'fas fa-info-circle';
+            if (type === 'success') icon = 'fas fa-check-circle';
+            if (type === 'error') icon = 'fas fa-exclamation-triangle';
+            
+            statusDiv.innerHTML = `
+                <i class="${icon}"></i>
+                <span>${message}</span>
+            `;
+            
+            statusContainer.appendChild(statusDiv);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (statusDiv.parentNode) {
+                    statusDiv.parentNode.removeChild(statusDiv);
+                }
+            }, 5000);
+        }
+
+        // ==================== DETAIL PAGE FUNCTIONS ====================
+        function openDetailPage(type) {
+            // Hide dashboard
+            document.getElementById('dashboard').classList.remove('active');
+            
+            // Show appropriate detail page
+            document.getElementById(`detail${type}`).classList.add('active');
+            
+            // Populate data
+            if (type === '24h') {
+                populateHourlyData();
+            } else if (type === '7d') {
+                populateDailyData();
+            }
+        }
+
+        function closeDetailPage() {
+            // Hide all detail pages
+            document.querySelectorAll('.detail-page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Show dashboard
+            document.getElementById('dashboard').classList.add('active');
+        }
+
+        function populateHourlyData() {
+            const container = document.getElementById('hourlyData24h');
+            const data = DETAIL_DATA['24h'].hourlyData;
+            
+            container.innerHTML = data.map(hour => `
+                <div class="hour-item">
+                    <div class="hour-time">${hour.hour}</div>
+                    <div class="hour-aqi" style="color: ${getAQIColor(hour.aqi)}">${hour.aqi}</div>
+                </div>
+            `).join('');
+        }
+
+        function populateDailyData() {
+            const container = document.getElementById('dailyData7d');
+            const data = DETAIL_DATA['7d'].dailyData;
+            
+            container.innerHTML = data.map(day => `
+                <div class="day-item">
+                    <div class="day-name">${day.day}</div>
+                    <div class="day-date">${day.date}</div>
+                    <div class="day-aqi" style="color: ${getAQIColor(day.aqi)}">${day.aqi}</div>
+                    <div class="day-status">${day.status}</div>
+                </div>
+            `).join('');
+        }
+
+        // ==================== EVENT LISTENERS ====================
+        document.getElementById('none').addEventListener('change', function() {
+            if (this.checked) {
+                const otherConditions = document.querySelectorAll('.condition-item input[type="checkbox"]:not(#none)');
+                otherConditions.forEach(cb => cb.checked = false);
+            }
+        });
+
+        document.querySelectorAll('.condition-item input[type="checkbox"]:not(#none)').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                if (this.checked) {
+                    document.getElementById('none').checked = false;
+                }
+            });
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + D for dark mode toggle
+            if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+                e.preventDefault();
+                toggleTheme();
+            }
+            // Ctrl/Cmd + R for refresh data (with Shift)
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'r') {
+                e.preventDefault();
+                refreshData();
+            }
+        });
+
+        // ==================== INITIALIZATION ====================
+        window.addEventListener('DOMContentLoaded', function() {
+            // Load theme
+            loadTheme();
+            
+            // Check if user has already completed setup
+            const savedProfile = localStorage.getItem('userProfile');
+            if (savedProfile) {
+                userProfile = JSON.parse(savedProfile);
+                document.getElementById('questionnaire').style.display = 'none';
+                initializeDashboard();
+            } else {
+                // Show first question
+                showQuestion(1);
+            }
+        });
+
+        // Function to reset questionnaire (for testing purposes)
+        function resetQuestionnaire() {
+            localStorage.removeItem('userProfile');
+            userProfile = {};
+            document.getElementById('questionnaire').style.display = 'block';
+            document.querySelectorAll('.detail-page').forEach(page => {
+                page.classList.remove('active');
+            });
+            currentQuestion = 1;
+            showQuestion(1);
+        }
+
+        // Add reset button for testing (remove in production)
+        window.resetQuestionnaire = resetQuestionnaire;
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (dataUpdateInterval) {
+                clearInterval(dataUpdateInterval);
+            }
+            if (mockDataTimeout) {
+                clearTimeout(mockDataTimeout);
+            }
+        });
+    </script>
+</body>
+</html>
