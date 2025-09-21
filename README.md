@@ -88,9 +88,8 @@ curl http://localhost:5000/api/aqi/nyc/current
 
 ## 📊 Data Sources
 
-- **Mock Data**: Realistic AQI values (0-300) with multiple pollutants
-- **Location Mapping**: User-saved locations, AQI history tracked
-- **Historical Data**: Time-series data with proper timestamps
+- **Apollo Hospitals** patient diagnosis dataset
+- **Mock Data**: EPA & NYC OpenWeather air quality real-time data
 - **Environmental Factors**: Temperature, humidity, and pollutant levels
 
 ## 🤖 AI Integration
